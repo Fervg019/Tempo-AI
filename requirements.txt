@@ -1,0 +1,17 @@
+# Core (runs on a normal laptop CPU)
+numpy
+pandas
+scikit-learn
+joblib
+pytest
+
+# Added in later steps
+# fastapi
+# uvicorn
+# streamlit
+# pydantic
+# openai          # talks to the vLLM server on the AMD cloud machine
+
+# PyTorch is installed separately:
+#   Laptop (CPU only):  pip install torch --index-url https://download.pytorch.org/whl/cpu
+#   AMD cloud machine:  use the PyTorch/ROCm build that matches the machine's ROCm version
