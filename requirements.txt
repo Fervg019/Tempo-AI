@@ -1,7 +1,10 @@
-# Core (runs on a normal laptop CPU)
-numpy
-pandas
-scikit-learn
+# Core (runs on a normal laptop CPU).
+# Versions are pinned on purpose: on the developer's Windows PC, brand-new releases of
+# numpy/scipy were blocked by an Application Control policy, and these older ones load fine.
+numpy==2.2.6
+pandas==2.2.3
+scipy==1.15.3
+scikit-learn==1.6.1
 joblib
 pytest
 
@@ -12,6 +15,6 @@ pytest
 # pydantic
 # openai          # talks to the vLLM server on the AMD cloud machine
 
-# PyTorch is installed separately:
+# PyTorch is optional and installed separately (only needed to run the planner on a GPU):
 #   Laptop (CPU only):  pip install torch --index-url https://download.pytorch.org/whl/cpu
 #   AMD cloud machine:  use the PyTorch/ROCm build that matches the machine's ROCm version

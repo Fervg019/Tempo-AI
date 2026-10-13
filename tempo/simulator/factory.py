@@ -88,7 +88,8 @@ class CostModel:
     planned_downtime_per_day: float = 3_000.0     # planned stop, work is re-routed (scaled by demand)
     planned_repair: float = 2_000.0               # normal repair
     wasted_life_per_day: float = 150.0            # servicing early throws away remaining life
-    service_days: int = 1                         # how long a repair takes
+    service_days: int = 1                         # how long a planned repair takes
+    unplanned_downtime_days: float = 3.0          # a surprise failure stops the line longer (waiting for staff/parts)
 
 
 @dataclass
@@ -109,8 +110,13 @@ class Scenario:
 
 
 def make_scenario(seed: int, n_machines: int = 20, horizon: int = 30,
-                  cfg: DegradationConfig | None = None, costs: CostModel | None = None) -> Scenario:
-    """A fleet where every machine is somewhere in its life, plus schedule, staff and parts."""
+                  cfg: DegradationConfig | None = None, costs: CostModel | None = None,
+                  age_range: tuple[float, float] = (0.35, 0.95)) -> Scenario:
+    """A fleet where every machine is somewhere in its life, plus schedule, staff and parts.
+
+    age_range: how far through its life each machine is "today" (0 = brand new, 1 = about to fail).
+    (0.35, 0.95) is a stressed fleet; use e.g. (0.05, 0.8) for a healthier one.
+    """
     cfg = cfg or DegradationConfig()
     costs = costs or CostModel()
     rng = np.random.default_rng(seed)
@@ -119,8 +125,8 @@ def make_scenario(seed: int, n_machines: int = 20, horizon: int = 30,
     for mid in range(n_machines):
         full = simulate_machine(rng, cfg, mid)
         life = len(full)
-        # "today" is somewhere between 35% and 95% of its life, so some are healthy and some are close to failing
-        today = int(np.clip(rng.uniform(0.35, 0.95) * life, 10, life - 1))
+        # "today" is somewhere inside its life, so some machines are healthy and some are close to failing
+        today = int(np.clip(rng.uniform(*age_range) * life, 10, life - 1))
         frames.append(full.iloc[: today + 1])
         true_rul.append(float(life - today))
     histories = pd.concat(frames, ignore_index=True)
