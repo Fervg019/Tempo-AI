@@ -6,7 +6,7 @@ Built for the AMD Developer Hackathon ACT III (Intelligent Industry track).
 
 ## What it does
 
-1. **Forecaster:** predicts how many days each machine has left, as a range with honest uncertainty.
+1. **Forecaster:** predicts how many days each machine has left, as a calibrated range with honest uncertainty.
 2. **Planner:** replays the future thousands of times (Monte Carlo, GPU-ready) and picks the cheapest repair schedule given production demand, technicians, spare parts and costs.
 3. **Explainer + validator:** an LLM served with vLLM on AMD explains the plan; a rule-based checker verifies it before a human approves.
 
@@ -14,22 +14,32 @@ Built for the AMD Developer Hackathon ACT III (Intelligent Industry track).
 
 | Part | State |
 |---|---|
-| Factory simulator | done |
-| Baseline forecaster (quantile gradient boosting) | done, ranges slightly overconfident |
+| Factory simulator (with scarce technicians / late parts options) | done |
+| Forecaster (quantile gradient boosting) + tail sampling + calibration on held-out machines | done |
 | Planner (Monte Carlo cost matrix + exact assignment) | done on CPU (NumPy); PyTorch/GPU path written, **not yet run** |
-| Forecast calibration | **next, needed (see results below)** |
-| Validator | next |
+| Strategy comparison on unseen fleets | done (results below) |
+| Validator (plan rules, work-order safety checklist, unverified-number check) | done |
 | LLM explainer (vLLM on AMD) | next |
 | Backend + app | next |
-| Final evaluation (all strategies, cost sensitivity) | next |
+| Final evaluation (cost sensitivity) | next |
 
 ## Data honesty
 
-The factory simulator is synthetic. Public datasets have sensor data but no production schedules, technician shifts, spare parts or costs, so the decision setting is simulated. All cost numbers are assumptions and will be tested across a range of values.
+The factory simulator is synthetic. Public datasets have sensor data but no production schedules, technician shifts, spare parts or costs, so the decision setting is simulated. All cost numbers are assumptions (a surprise failure costs roughly 13x a planned repair) and still need a sensitivity test.
 
 ## How the planner works
 
-For every machine and every possible service day, it averages the cost over thousands of simulated futures (failure times drawn from the forecast range). Because machines only compete for technician-days and spare parts, picking the best day for every machine at once is an assignment problem, solved exactly (Hungarian algorithm). "Optimal" means optimal for our forecast and our cost assumptions, not a promise about the real world.
+For every machine and every possible service day, it averages the cost over thousands of simulated futures (failure times drawn from the forecast range, including the risky early-failure tail). Machines only compete for technician-days and spare parts, so choosing every machine's best day at once is an assignment problem, solved exactly (Hungarian algorithm). "Optimal" means optimal for our forecast and our cost assumptions, not a promise about the real world.
+
+## The validator (the LLM proposes, the rulebook decides)
+
+Plain, non-AI checks that every plan must pass before a human sees it (`tempo/validator/rules.py`):
+
+- **Plan:** no repair on a day without technicians, none before its spare part arrives, none outside the planning window, an optional company cap per day. Risky machines left unrepaired raise a warning for a human.
+- **Work order (drafted by the LLM):** must match the planned day, be well formed, and cover the mandatory safety checklist (lockout/tagout, energy isolation, protective equipment, test before restart).
+- **Explanation text:** every number the LLM writes (costs, chances) must exist in the real plan data, otherwise it is flagged. This check is strong for costs and percentages and weak for small whole numbers (days, machine numbers), because many small numbers are legitimately in the data.
+
+The final evaluation will report how often the LLM's raw draft broke a rule and was caught.
 
 ## Setup on Windows (PowerShell)
 
@@ -46,40 +56,49 @@ Run everything through `.\venv\Scripts\python.exe` (no need to activate the envi
 ## Run
 
 ```powershell
-.\venv\Scripts\python.exe -m pytest -q                      # all tests
-.\venv\Scripts\python.exe -m tempo.forecast.train           # train + evaluate the forecaster (~10 s)
-.\venv\Scripts\python.exe -m tempo.planner.demo             # compare strategies on 50 unseen fleets (~20 s)
+.\venv\Scripts\python.exe -m pytest -q                                  # all tests
+.\venv\Scripts\python.exe -m tempo.forecast.train                       # train + evaluate the forecaster
+.\venv\Scripts\python.exe -m tempo.planner.demo                         # standard fleets (2-4 minutes)
+.\venv\Scripts\python.exe -m tempo.planner.demo --preset scarce         # few technicians, late parts
+.\venv\Scripts\python.exe -m tempo.planner.demo --preset healthy        # machines mostly far from failure
 ```
 
-## Results so far (simulated fleets, machines unseen in training)
+## Results (simulated fleets, 60 unseen fleets each, 30-day horizon, average cost per fleet)
 
-Forecaster on unseen machines:
+Nothing is graded on data it learned from: the forecaster, the range calibration, the alarm threshold and the test fleets all use different random seeds. The baseline alarm's threshold is tuned on separate practice fleets, so it is a strong, fair opponent (an untuned alarm, e.g. 14 days, does far worse).
+
+| Fleet type | Run to failure | Best tuned alarm | **Tempo** | Oracle (knows the truth, unreachable) |
+|---|---|---|---|---|
+| Standard (20 machines, 2 technicians/weekday) | 1,113,397 | **236,350** | 270,556 | 159,280 |
+| Healthy (machines mostly far from failure) | 713,179 | 198,788 | 195,943 | 59,118 |
+| **Scarce (30 machines, 1 technician/weekday, none at weekends, late parts)** | 1,637,645 | 904,469 | **721,576** | 362,011 |
+
+Tempo versus the tuned alarm:
+
+- **Scarce resources: Tempo is 20% cheaper (+/- 4.6), and cheaper in 92% of fleets.** This is the case Tempo is designed for: when you cannot fix everything at once, choosing which machine goes first and when matters.
+- **Healthy fleets: a tie** (+1.4% +/- 8.2).
+- **Standard fleets: Tempo is 14.5% more expensive (+/- 7.6).** When technicians are plentiful and most machines are near failure, "service nearly everything immediately" is hard to beat, and the forecast's remaining errors cost Tempo more than smart scheduling gains.
+- Against doing nothing, Tempo is 56-76% cheaper in every case.
+
+How Tempo improved: the first version lost to the alarm by 31% on standard fleets. Sampling the risky early-failure tail brought that to 17%, and range calibration to 14.5%. On scarce fleets those two fixes made no measurable difference.
+
+Caveats: the scarce setting was added after the standard result, as the case where scheduling should matter, and it is still a simulation. The remaining gap to the oracle (about 270k vs 159k on standard fleets) is forecast error, which is where further improvement would come from.
+
+## Forecaster (before calibration), unseen machines
 
 | | all rows | last 30 days before failure |
 |---|---|---|
 | Median error (days) | 8.2 | 4.7 |
 | "Guess the average" error | 17.9 | |
 | 90% range contains the truth | 85.9% | 81.1% |
-| 50% range contains the truth | 42.4% | 36.1% |
-
-Strategy comparison, 60 unseen fleets of 20 machines, 30-day horizon, average cost per fleet:
-
-| Strategy | Cost | Failures per fleet |
-|---|---|---|
-| Run to failure | 1,113,397 | 15.5 |
-| Best simple alarm (threshold 45 days, tuned on these same fleets) | 240,172 | 1.6 |
-| **Tempo (current)** | **310,140** | **3.1** |
-| Oracle (planner given the true failure times; unreachable upper bound) | 159,280 | 1.3 |
-
-**Current honest finding: Tempo beats doing nothing by 72% but does NOT yet beat a well-tuned simple alarm.** On a healthier fleet the gap is similar (Tempo 228,058 vs alarm 191,348). Diagnosis: the forecast is too optimistic about remaining life and the sampler ignores the lowest 5% tail, so Tempo defers repairs it should not. Pretending machines fail 20% sooner than forecast brings Tempo to 238,105, level with the alarm, which confirms the cause but is not a legitimate fix (it was tuned on the test fleets). The real fix is calibrating the forecast on held-out data, then testing on harder scenarios where technicians and parts are scarce, which is where scheduling should matter most.
 
 ## Project layout
 
 ```
 tempo/simulator   fake factory: machines, sensors, schedule, costs
-tempo/forecast    remaining-life model
+tempo/forecast    remaining-life model + calibration
 tempo/planner     cost matrix, exact scheduler, baseline strategies, comparison demo
-tempo/validator   rule checker (to do)
+tempo/validator   rulebook: checks plans, work orders and LLM text
 tempo/llm         LLM explanation layer (to do)
 tempo/api         backend server (to do)
 app/              the supervisor's screen (to do)

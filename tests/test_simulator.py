@@ -36,3 +36,14 @@ def test_scenario_shapes_and_hidden_truth():
     # the history only goes up to "today": the true failure is still in the future
     last_day = sc.histories.groupby("machine_id")["day"].max().to_numpy()
     assert (sc.true_rul >= 1).all() and (last_day >= 10).all()
+
+
+def test_scarcity_options_are_respected():
+    sc = make_scenario(seed=7, n_machines=25, horizon=28, tech_weekday=1, tech_weekend=0, parts_delay_prob=1.0)
+    assert sc.technicians.max() <= 1
+    weekend = (np.arange(28) % 7) >= 5
+    assert (sc.technicians[weekend] == 0).all()
+    assert (sc.parts_ready_day >= 1).all()          # every part is late when the delay chance is 100%
+
+    sc2 = make_scenario(seed=7, n_machines=25, horizon=28, parts_delay_prob=0.0)
+    assert (sc2.parts_ready_day == 0).all()          # no part is late when the delay chance is 0%

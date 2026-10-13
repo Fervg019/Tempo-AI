@@ -83,10 +83,13 @@ def plan_from_samples(samples: np.ndarray, demand: np.ndarray, technicians: np.n
 
 
 def plan_fleet(scenario: Scenario, forecaster, quantile_values: np.ndarray, n_samples: int = 5000,
-               seed: int = 0, backend: str = "numpy", device: str = "auto") -> Plan:
-    """Forecast ranges -> sampled failure times -> cheapest schedule for a scenario."""
+               seed: int = 0, backend: str = "numpy", device: str = "auto", tails: bool = True) -> Plan:
+    """Forecast ranges -> sampled failure times -> cheapest schedule for a scenario.
+
+    tails=False reproduces the first version, which ignored the lowest/highest 5% of futures.
+    """
     rng = np.random.default_rng(seed)
-    samples = forecaster.sample_rul(quantile_values, n_samples, rng)
+    samples = forecaster.sample_rul(quantile_values, n_samples, rng, tails=tails)
     return plan_from_samples(samples, scenario.demand, scenario.technicians, scenario.parts_ready_day,
                              scenario.costs, backend=backend, device=device)
 

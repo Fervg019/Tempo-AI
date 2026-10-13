@@ -111,11 +111,15 @@ class Scenario:
 
 def make_scenario(seed: int, n_machines: int = 20, horizon: int = 30,
                   cfg: DegradationConfig | None = None, costs: CostModel | None = None,
-                  age_range: tuple[float, float] = (0.35, 0.95)) -> Scenario:
+                  age_range: tuple[float, float] = (0.35, 0.95), tech_weekday: int = 2,
+                  tech_weekend: int = 1, parts_delay_prob: float = 0.4) -> Scenario:
     """A fleet where every machine is somewhere in its life, plus schedule, staff and parts.
 
     age_range: how far through its life each machine is "today" (0 = brand new, 1 = about to fail).
     (0.35, 0.95) is a stressed fleet; use e.g. (0.05, 0.8) for a healthier one.
+    tech_weekday / tech_weekend: technicians on shift per day. Lower numbers make repair
+    capacity scarce, which is when choosing WHICH machine to fix first really matters.
+    parts_delay_prob: chance a machine's spare part is not available yet today.
     """
     cfg = cfg or DegradationConfig()
     costs = costs or CostModel()
@@ -137,10 +141,11 @@ def make_scenario(seed: int, n_machines: int = 20, horizon: int = 30,
     for _ in range(2):  # two busy periods (big orders)
         start = int(rng.integers(0, max(1, horizon - 4)))
         demand[start:start + 4] *= 1.6
-    technicians = np.where(weekend, 1, 2).astype(int)
+    technicians = np.where(weekend, tech_weekend, tech_weekday).astype(int)
     technicians[rng.integers(0, horizon)] = 0  # one day nobody is available
 
-    parts_ready = np.where(rng.random(n_machines) < 0.6, 0, rng.integers(1, max(2, horizon // 2), n_machines))
+    parts_ready = np.where(rng.random(n_machines) < 1.0 - parts_delay_prob, 0,
+                           rng.integers(1, max(2, horizon // 2), n_machines))
 
     return Scenario(
         seed=seed, horizon=horizon, histories=histories, machine_ids=np.arange(n_machines),

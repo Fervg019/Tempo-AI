@@ -18,6 +18,21 @@ from .features import build_features, feature_columns
 QUANTILES = (0.05, 0.10, 0.25, 0.50, 0.75, 0.90, 0.95)
 
 
+def sample_from_quantiles(quantile_values: np.ndarray, quantiles, n_samples: int, rng: np.random.Generator,
+                          rul_cap: float, tails: bool = True) -> np.ndarray:
+    """Turn forecast quantiles into random failure times (days from now), one row per machine."""
+    qs = np.asarray(quantiles, dtype=float)
+    qv = np.asarray(quantile_values, dtype=float)
+    if tails:
+        # Extend the curve to levels 0 and 1 using the slope of the outermost interval.
+        lo = np.maximum(0.0, qv[:, :1] - (qv[:, 1:2] - qv[:, :1]) * (qs[0] / (qs[1] - qs[0])))
+        hi = np.minimum(rul_cap, qv[:, -1:] + (qv[:, -1:] - qv[:, -2:-1]) * ((1 - qs[-1]) / (qs[-1] - qs[-2])))
+        qs = np.concatenate([[0.0], qs, [1.0]])
+        qv = np.concatenate([lo, qv, hi], axis=1)
+    u = rng.uniform(qs[0], qs[-1], size=(qv.shape[0], n_samples))
+    return np.stack([np.interp(u[i], qs, qv[i]) for i in range(qv.shape[0])])
+
+
 class QuantileForecaster:
     def __init__(self, rul_cap: float = 120.0, quantiles=QUANTILES, max_iter: int = 200,
                  learning_rate: float = 0.08, max_leaf_nodes: int = 15, seed: int = 0):
@@ -52,16 +67,17 @@ class QuantileForecaster:
         feats = build_features(df)
         return self.predict_from_features(feats)
 
-    def sample_rul(self, quantile_values: np.ndarray, n_samples: int, rng: np.random.Generator) -> np.ndarray:
+    def sample_rul(self, quantile_values: np.ndarray, n_samples: int, rng: np.random.Generator,
+                   tails: bool = True) -> np.ndarray:
         """Draw possible failure times from each machine's forecast range.
 
         quantile_values: (n_machines, n_quantiles). Returns (n_machines, n_samples).
-        This is the 'roll the dice' step the planner uses. Draws stay within the
-        5%-95% range we modelled (tails are not extrapolated).
+        This is the 'roll the dice' step the planner uses. With tails=True (default) the
+        lowest 5% and highest 5% of futures are included too, extended in a straight line
+        from the outermost forecast values. The riskiest futures (early failures) live in
+        that lowest tail, so ignoring it makes the planner too relaxed.
         """
-        qs = np.array(self.quantiles)
-        u = rng.uniform(qs[0], qs[-1], size=(quantile_values.shape[0], n_samples))
-        return np.stack([np.interp(u[i], qs, quantile_values[i]) for i in range(quantile_values.shape[0])])
+        return sample_from_quantiles(quantile_values, self.quantiles, n_samples, rng, self.rul_cap, tails)
 
 
 def evaluate(model: QuantileForecaster, df: pd.DataFrame, late_life_days: float = 30.0) -> dict[str, float]:
