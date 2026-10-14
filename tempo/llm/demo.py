@@ -90,6 +90,18 @@ def main() -> int:
     for f in result.explanation_report.warnings:
         print(f"  flagged: {f.message}")
     print("  plan check:", "passed" if result.plan_report.ok else "FAILED")
+    if result.llm_errors:
+        print("\nAPI PROBLEMS THAT WERE ABSORBED")
+        for e in result.llm_errors:
+            print("  " + e)
+    if result.first_try_problems:
+        print("\nWHY DRAFTS WERE REJECTED (first try)")
+        for mid, msgs in result.first_try_problems.items():
+            print(f"  machine {mid}: " + " | ".join(msgs))
+    if result.repair_problems:
+        print("\nSTILL WRONG AFTER THE REPAIR TRY")
+        for mid, msgs in result.repair_problems.items():
+            print(f"  machine {mid}: " + " | ".join(msgs))
     return 0
 
 

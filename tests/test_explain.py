@@ -147,3 +147,10 @@ def test_oddly_shaped_model_replies_fall_back_instead_of_crashing(setup):
     assert all_valid(r, sc, plan)
     assert set(r.order_source.values()) == {"template"}
     assert "machines have a repair planned" in r.summary
+
+
+def test_prompts_never_contain_a_concrete_example_id_the_model_could_copy():
+    from tempo.llm.explain import EXPLAIN_SYSTEM, ORDER_SYSTEM, ORDER_SYSTEM_BARE
+    for prompt in (EXPLAIN_SYSTEM, ORDER_SYSTEM, ORDER_SYSTEM_BARE):
+        assert '"machine_id": 3' not in prompt and '"service_day": 5' not in prompt
+        assert "<id>" in prompt

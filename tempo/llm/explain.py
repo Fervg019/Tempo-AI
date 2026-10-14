@@ -33,15 +33,18 @@ EXPLAIN_SYSTEM = (
     "computed a repair plan. Your job is only to explain it in plain, short sentences. Rules: use ONLY numbers "
     "that appear in the facts; never invent machines, days, costs or chances; never change the plan; write "
     "costs as full numbers like $12,345 (never abbreviate). Day 0 is today. Reply with ONLY a JSON object: "
-    '{"summary": "3 to 5 sentences for the whole fleet", "machines": [{"machine_id": 3, "reason": "at most 2 '
-    'sentences"}]}.'
+    '{"summary": "3 to 5 sentences for the whole fleet", "machines": [{"machine_id": <id>, "reason": "at most 2 '
+    'sentences"}]} with one entry per machine that has a repair planned, using the real machine_id values from the facts '
+    '(<id> is a placeholder, not a real value).'
 )
 ORDER_SYSTEM = (
     "You draft maintenance work orders. For each machine you are given, base the steps on the procedure text "
     "provided and do not add tools, parts or numbers that are not in it. Rules: service_day must equal the "
     "given service_day exactly; safety_steps must cover lockout/tagout, isolating all energy, and protective "
     "equipment; steps must end with a function test before restart. Reply with ONLY a JSON object: "
-    '{"work_orders": [{"machine_id": 3, "service_day": 5, "steps": ["..."], "safety_steps": ["..."]}]}.'
+    '{"work_orders": [{"machine_id": <id>, "service_day": <day>, "steps": ["..."], "safety_steps": ["..."]}]} '
+    "with exactly one entry for EACH machine in the input, copying its machine_id and service_day from the input "
+    "(<id> and <day> are placeholders, not real values)."
 )
 # Used to measure the model's RAW mistake rate: the same job, but the safety rules are NOT spelled out,
 # so the validator (not the prompt) is what catches a missing lockout/tagout.
@@ -49,7 +52,9 @@ ORDER_SYSTEM_BARE = (
     "You draft maintenance work orders. For each machine you are given, base the steps on the procedure text "
     "provided and do not add tools, parts or numbers that are not in it. service_day must equal the given "
     "service_day exactly. Reply with ONLY a JSON object: "
-    '{"work_orders": [{"machine_id": 3, "service_day": 5, "steps": ["..."], "safety_steps": ["..."]}]}.'
+    '{"work_orders": [{"machine_id": <id>, "service_day": <day>, "steps": ["..."], "safety_steps": ["..."]}]} '
+    "with exactly one entry for EACH machine in the input, copying its machine_id and service_day from the input "
+    "(<id> and <day> are placeholders, not real values)."
 )
 
 
@@ -63,6 +68,9 @@ class ExplainedPlan:
     explanation_report: Report
     stats: dict[str, float] = field(default_factory=dict)
     llm_calls: int = 0
+    first_try_problems: dict[int, list[str]] = field(default_factory=dict)   # what the validator caught, per machine
+    repair_problems: dict[int, list[str]] = field(default_factory=dict)      # what was still wrong after the repair try
+    llm_errors: list[str] = field(default_factory=list)                      # API/parse errors that were absorbed
 
 
 # ---------------------------------------------------------------------------
@@ -145,7 +153,7 @@ def _chunks(items: list, n: int):
 
 
 def explain_plan(llm, scenario: Scenario, plan, quantile_values: np.ndarray, latest_features,
-                 batch_size: int = 6, max_orders: int | None = None,
+                 batch_size: int = 3, max_orders: int | None = None,
                  tell_model_the_rules: bool = True) -> ExplainedPlan:
     """Full pipeline. `llm` needs .chat_json(messages, max_tokens=...) (LLMClient or FakeLLM).
 
@@ -161,6 +169,7 @@ def explain_plan(llm, scenario: Scenario, plan, quantile_values: np.ndarray, lat
     by_id = {m["machine_id"]: m for m in facts["machines"]}
 
     # ---- explanation ----
+    llm_errors: list[str] = []
     reasons: dict[int, str] = {}
     summary = ""
     try:
@@ -177,8 +186,8 @@ def explain_plan(llm, scenario: Scenario, plan, quantile_values: np.ndarray, lat
                 continue
             if mid in by_id and isinstance(item.get("reason"), str):
                 reasons[mid] = item["reason"].strip()
-    except LLMError:
-        pass
+    except LLMError as e:
+        llm_errors.append(f"explanation call: {e}")
     ov = facts["overview"]
     if not summary:
         summary = (f"{ov['machines_with_repair_planned']} of {ov['machines_total']} machines have a repair planned "
@@ -212,15 +221,25 @@ def explain_plan(llm, scenario: Scenario, plan, quantile_values: np.ndarray, lat
             payload["fix_these_problems"] = {str(k): v for k, v in problems.items()}
         try:
             reply = _ask(llm, ORDER_SYSTEM if tell_model_the_rules else ORDER_SYSTEM_BARE, payload, max_tokens=2500)
-        except LLMError:
+        except LLMError as e:
+            llm_errors.append(f"work-order call for machines {[m['machine_id'] for m in batch]}: {e}")
             return {}
         out = {}
         raw_orders = reply.get("work_orders")
+        if not isinstance(raw_orders, list):
+            llm_errors.append(f"work-order reply for machines {[m['machine_id'] for m in batch]} had no "
+                              f"'work_orders' list (keys: {sorted(map(str, reply))[:6]})")
         for o in raw_orders if isinstance(raw_orders, list) else []:
             try:
                 out[int(o["machine_id"])] = o
             except (KeyError, TypeError, ValueError):
                 continue
+        wanted = [m["machine_id"] for m in batch]
+        if isinstance(raw_orders, list) and any(w not in out for w in wanted):
+            first = raw_orders[0] if raw_orders else None
+            shape = (sorted(map(str, first))[:8] if isinstance(first, dict) else type(first).__name__)
+            llm_errors.append(f"asked for machines {wanted}; reply had {len(raw_orders)} order(s) matching "
+                              f"{sorted(out)}; first item looks like: {shape}")
         return out
 
     drafts: dict[int, dict] = {}
@@ -243,13 +262,20 @@ def explain_plan(llm, scenario: Scenario, plan, quantile_values: np.ndarray, lat
             problems[mid] = [f.message for f in rep.errors]
 
     repaired = 0
+    still_wrong: dict[int, list[str]] = {}
     for batch in _chunks(failed, batch_size):
         retry = request_orders(batch, {m["machine_id"]: problems[m["machine_id"]] for m in batch})
         for m in batch:
             mid = m["machine_id"]
-            if mid in retry and validate_work_order(retry[mid], scenario, sday).ok:
+            if mid not in retry:
+                still_wrong[mid] = ["the model returned no work order for this machine in the repair reply"]
+                continue
+            rep2 = validate_work_order(retry[mid], scenario, sday)
+            if rep2.ok:
                 orders[mid], source[mid] = retry[mid], "llm_repaired"
                 repaired += 1
+            else:
+                still_wrong[mid] = [f.message for f in rep2.errors]
     for m in failed:
         mid = m["machine_id"]
         if mid not in orders:
@@ -268,4 +294,4 @@ def explain_plan(llm, scenario: Scenario, plan, quantile_values: np.ndarray, lat
         "rules_in_prompt": 1.0 if tell_model_the_rules else 0.0,
     }
     return ExplainedPlan(summary, reasons, orders, source, plan_report, explanation_report, stats,
-                         getattr(llm, "calls", 0) - calls_before)
+                         getattr(llm, "calls", 0) - calls_before, problems, still_wrong, llm_errors)
