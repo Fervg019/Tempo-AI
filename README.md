@@ -8,7 +8,7 @@ Built for the AMD Developer Hackathon ACT III (Intelligent Industry track).
 
 1. **Forecaster:** predicts how many days each machine has left, as a calibrated range with honest uncertainty.
 2. **Planner:** replays the future thousands of times (Monte Carlo, GPU-ready) and picks the cheapest repair schedule given production demand, technicians, spare parts and costs.
-3. **Explainer + validator:** an LLM served with vLLM on AMD explains the plan; a rule-based checker verifies it before a human approves.
+3. **Explainer + validator:** an LLM running on AMD GPUs (AMD Token Factory API) explains the plan; a rule-based checker verifies it before a human approves.
 
 ## Status
 
@@ -19,7 +19,7 @@ Built for the AMD Developer Hackathon ACT III (Intelligent Industry track).
 | Planner (Monte Carlo cost matrix + exact assignment) | done on CPU (NumPy); PyTorch/GPU path written, **not yet run** |
 | Strategy comparison on unseen fleets | done (results below) |
 | Validator (plan rules, work-order safety checklist, unverified-number check) | done |
-| LLM explainer (vLLM on AMD) | next |
+| LLM explainer (Token Factory API; offline stand-in model; template fallback) | done and tested offline; real-API run pending |
 | Backend + app | next |
 | Final evaluation (cost sensitivity) | next |
 
@@ -40,6 +40,29 @@ Plain, non-AI checks that every plan must pass before a human sees it (`tempo/va
 - **Explanation text:** every number the LLM writes (costs, chances) must exist in the real plan data, otherwise it is flagged. This check is strong for costs and percentages and weak for small whole numbers (days, machine numbers), because many small numbers are legitimately in the data.
 
 The final evaluation will report how often the LLM's raw draft broke a rule and was caught.
+
+## The explainer (LLM on AMD, with the rulebook in charge)
+
+`tempo/llm` turns a computed plan into plain language and work orders, using the AMD Token Factory API (OpenAI-compatible models running on AMD GPUs). It uses only Python's standard library, so there is nothing extra to install.
+
+1. **Facts:** every real number about the plan is collected. These are the only numbers the model may use.
+2. **Explanation:** one call writes a short summary and one reason per machine. Numbers in the text are checked against the facts.
+3. **Work orders:** drafted in small batches from example procedures; each draft goes through the validator (right day? full safety checklist?). A failed draft gets one repair attempt with the exact errors; if it still fails, a no-AI template order is used. A human never sees an invalid order.
+4. **Fallbacks:** if the API is down or rate-limited, the app still produces a valid summary and orders from templates.
+
+The example procedures are short demo text, not real maintenance instructions. A real plant would use its own manuals.
+
+Token Factory limits to design around: about 20 requests a minute per account (shared by the whole team), a daily cap, no uptime promise, trial and development use only, and no reselling or proxying. The app therefore uses the model only for these fixed jobs, keeps the key on the server, and caches results.
+
+The key goes in a `.env` file (copy `.env.example`), which git ignores. Then:
+
+```powershell
+.\venv\Scripts\python.exe -m tempo.llm.demo --check           # does the key work? lists today's models
+.\venv\Scripts\python.exe -m tempo.llm.demo --fake sloppy     # offline: a pretend model that makes typical mistakes
+.\venv\Scripts\python.exe -m tempo.llm.demo                   # the real model
+```
+
+Note: the "sloppy" model is scripted, so its 25% first-try rate shows the pipeline works, not how good a real model is. The real rate is measured with `explain_plan(..., tell_model_the_rules=False)`, which leaves the safety rules out of the prompt.
 
 ## Setup on Windows (PowerShell)
 
@@ -99,7 +122,7 @@ tempo/simulator   fake factory: machines, sensors, schedule, costs
 tempo/forecast    remaining-life model + calibration
 tempo/planner     cost matrix, exact scheduler, baseline strategies, comparison demo
 tempo/validator   rulebook: checks plans, work orders and LLM text
-tempo/llm         LLM explanation layer (to do)
+tempo/llm         API client, explainer, example procedures, offline stand-in model
 tempo/api         backend server (to do)
 app/              the supervisor's screen (to do)
 eval/             final results scripts (to do)
