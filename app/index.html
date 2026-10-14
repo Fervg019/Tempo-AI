@@ -1,0 +1,624 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tempo: when to fix each machine</title>
+<meta name="description" content="Tempo decides when to service each machine in a factory, explains the plan in plain words, and checks it against a rulebook before a person approves it.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Semi+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --paper: #edf0f2;
+  --panel: #ffffff;
+  --ink: #15212b;
+  --muted: #566774;
+  --line: #cbd3d9;
+  --line-soft: #e1e6ea;
+  --plan: #0e6f73;
+  --plan-tint: #d6ebec;
+  --ok: #2c7a4b;
+  --warn: #b56f00;
+  --warn-tint: #f6e7c8;
+  --risk: #b3342b;
+  --risk-tint: #f3d6d3;
+  --notech: repeating-linear-gradient(135deg, #dfe4e8 0 5px, #edf0f2 5px 10px);
+  --label-w: 148px;
+  --cw: 34px;
+  --sans: "Barlow", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --head: "Barlow Semi Condensed", "Barlow", system-ui, sans-serif;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 400 16px/1.5 var(--sans); }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid #1b6fd6; outline-offset: 2px; border-radius: 4px; }
+h1, h2, h3 { font-family: var(--head); font-weight: 700; margin: 0; letter-spacing: .005em; }
+.num { font-variant-numeric: tabular-nums; }
+
+.wrap { max-width: 1320px; margin: 0 auto; padding: 0 16px 48px; }
+header.top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 20px; padding: 20px 0 6px; }
+.brand { font: 700 30px/1 var(--head); letter-spacing: .01em; }
+.brand span { color: var(--plan); }
+.tag { color: var(--muted); font-size: 15px; max-width: 60ch; }
+.ai-state { margin-left: auto; font-size: 14px; color: var(--muted); display: flex; align-items: center; gap: 8px; }
+.dot { width: 9px; height: 9px; border-radius: 50%; background: var(--muted); display: inline-block; }
+.dot.on { background: var(--ok); }
+
+.headline { font: 600 clamp(22px, 3.2vw, 34px)/1.2 var(--head); margin: 14px 0 4px; max-width: 34em; }
+.headline .save { color: var(--plan); }
+.subline { color: var(--muted); margin: 0 0 18px; max-width: 70ch; min-height: 1.5em; }
+
+.controls { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; display: grid; gap: 14px; margin-bottom: 18px; }
+.presets { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.presets .lead { font-weight: 600; margin-right: 4px; }
+.chip { border: 1px solid var(--line); background: var(--paper); border-radius: 999px; padding: 6px 14px; cursor: pointer; min-height: 36px; }
+.chip:hover { border-color: var(--plan); }
+.chip[aria-pressed="true"] { background: var(--ink); color: #fff; border-color: var(--ink); }
+.sliders { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px 22px; }
+.field label { display: flex; justify-content: space-between; font-weight: 500; font-size: 15px; }
+.field output { font-variant-numeric: tabular-nums; color: var(--plan); font-weight: 600; }
+.field input[type=range] { width: 100%; accent-color: var(--plan); height: 28px; }
+.field select { width: 100%; min-height: 36px; border: 1px solid var(--line); border-radius: 6px; background: #fff; padding: 4px 8px; }
+.field .hint { font-size: 13px; color: var(--muted); margin-top: 0; }
+
+.layout { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 18px; align-items: start; }
+@media (max-width: 1060px) { .layout { grid-template-columns: minmax(0, 1fr); } }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px; }
+.card + .card { margin-top: 18px; }
+.card h2 { font-size: 21px; margin-bottom: 8px; }
+.card h3 { font-size: 17px; margin: 14px 0 4px; }
+.muted { color: var(--muted); }
+.small { font-size: 14px; }
+
+/* ---- the board ---- */
+.board-card { padding: 14px 0 12px; }
+.board-card > .pad { padding: 0 16px; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 14px; color: var(--muted); margin: 4px 0 10px; align-items: center; }
+.legend i { display: inline-block; vertical-align: -3px; margin-right: 6px; }
+.lg-band { width: 26px; height: 12px; background: var(--plan-tint); border-radius: 3px; }
+.lg-mk { width: 16px; height: 12px; background: var(--plan); border-radius: 3px; }
+.lg-mk.warn { background: var(--warn); } .lg-mk.risk { background: var(--risk); }
+.lg-tick { width: 2px; height: 14px; background: var(--plan); }
+.lg-no { width: 16px; height: 12px; background: var(--notech); border: 1px solid var(--line); }
+.scroller { overflow-x: auto; padding: 0 16px 6px; }
+.grid { position: relative; width: calc(var(--label-w) + var(--cw) * var(--days)); }
+.shade { position: absolute; top: 0; bottom: 0; background: var(--notech); pointer-events: none; }
+.shade.wk { background: rgba(21, 33, 43, .045); }
+.row { position: relative; display: grid; grid-template-columns: var(--label-w) calc(var(--cw) * var(--days)); align-items: center; min-height: 38px; border-bottom: 1px solid var(--line-soft); }
+.row.head, .row.techs { min-height: 30px; }
+.row.head { border-bottom: 1px solid var(--line); }
+.row.machine { cursor: pointer; }
+.row.machine:hover { background: rgba(14, 111, 115, .05); }
+.row.machine[aria-selected="true"] { background: rgba(14, 111, 115, .1); }
+.row.machine:focus-visible { outline-offset: -3px; }
+.lab { position: sticky; left: 0; z-index: 3; background: var(--panel); padding: 2px 10px 2px 2px; font-weight: 600; line-height: 1.15; height: 100%; display: flex; flex-direction: column; justify-content: center; }
+.row.machine:hover .lab { background: #f1f7f7; }
+.row.machine[aria-selected="true"] .lab { background: #e7f2f2; }
+.lab small { font-weight: 400; color: var(--muted); font-size: 13px; }
+.cells { position: relative; height: 100%; min-height: 30px; display: grid; grid-template-columns: repeat(var(--days), var(--cw)); }
+.cells > span { text-align: center; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; align-self: center; line-height: 1.1; }
+.cells > span b { display: block; color: var(--ink); font-weight: 600; }
+.cells > span.zero { color: var(--risk); font-weight: 600; }
+.track { position: relative; height: 38px; }
+.band { position: absolute; top: 9px; height: 20px; background: var(--plan-tint); border-radius: 4px; }
+.band.cut { border-top-right-radius: 0; border-bottom-right-radius: 0; background: linear-gradient(90deg, var(--plan-tint) 70%, transparent); }
+.tick { position: absolute; top: 6px; height: 26px; width: 2px; background: var(--plan); opacity: .75; }
+.later { position: absolute; top: 9px; font-size: 13px; color: var(--muted); white-space: nowrap; line-height: 20px; }
+.mk { position: absolute; top: 6px; height: 26px; border-radius: 5px; background: var(--plan); color: #fff; font-size: 12px; font-weight: 600; text-align: center; line-height: 26px; letter-spacing: -.02em; overflow: hidden; box-shadow: 0 1px 0 rgba(0,0,0,.25); z-index: 2; font-variant-numeric: tabular-nums; }
+.mk.warn { background: var(--warn); } .mk.risk { background: var(--risk); }
+.truth { position: absolute; top: 6px; width: var(--cw); text-align: center; color: var(--risk); font: 700 22px/26px var(--head); z-index: 2; }
+.empty { padding: 28px 16px; color: var(--muted); }
+
+/* ---- detail ---- */
+.detail dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 16px; margin: 8px 0; }
+.detail dt { color: var(--muted); }
+.detail dd { margin: 0; font-variant-numeric: tabular-nums; }
+.reason { border-left: 3px solid var(--plan); padding: 2px 0 2px 12px; margin: 10px 0; }
+.src { display: inline-block; font-size: 13px; padding: 1px 8px; border-radius: 999px; border: 1px solid var(--line); background: var(--paper); margin-left: 6px; font-weight: 500; }
+.src.ai { background: var(--plan-tint); border-color: #a9d3d5; }
+ol.steps { margin: 4px 0 8px 20px; padding: 0; }
+ol.steps li { margin: 2px 0; max-width: 72ch; }
+
+/* ---- side ---- */
+.btn { border: 1px solid var(--ink); background: var(--ink); color: #fff; border-radius: 8px; padding: 9px 16px; cursor: pointer; font-weight: 600; min-height: 42px; }
+.btn:hover:not(:disabled) { background: #26384a; }
+.btn.alt { background: #fff; color: var(--ink); }
+.btn.alt:hover:not(:disabled) { background: var(--paper); }
+.btn.go { background: var(--plan); border-color: var(--plan); }
+.btn.go:hover:not(:disabled) { background: #0b5a5d; }
+.btn.bad { background: #fff; color: var(--risk); border-color: var(--risk); }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.btnrow { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.note { border-radius: 8px; padding: 8px 12px; margin: 10px 0; font-size: 15px; }
+.note.info { background: var(--plan-tint); }
+.note.warn { background: var(--warn-tint); }
+.note.risk { background: var(--risk-tint); }
+.note.ok { background: #d9eddf; }
+.badge { display: inline-block; font-size: 13px; font-weight: 600; padding: 2px 9px; border-radius: 999px; }
+.badge.ok { background: #d9eddf; color: #1d5a37; } .badge.warn { background: var(--warn-tint); color: #7a4b00; } .badge.risk { background: var(--risk-tint); color: #8c241d; }
+.spin { display: inline-block; width: 14px; height: 14px; border: 2px solid var(--line); border-top-color: var(--plan); border-radius: 50%; vertical-align: -2px; margin-right: 8px; animation: sp .8s linear infinite; }
+@keyframes sp { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spin { animation: none; border-top-color: var(--plan); } }
+.fieldrow { display: grid; gap: 4px; margin: 8px 0; }
+.fieldrow input, .fieldrow textarea { width: 100%; border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; background: #fff; }
+.fieldrow textarea { min-height: 64px; resize: vertical; }
+details { border-top: 1px solid var(--line-soft); padding: 8px 0; }
+details > summary { cursor: pointer; font-weight: 600; }
+details summary:focus-visible { outline-offset: 2px; }
+.bars { display: grid; gap: 8px; margin: 10px 0; }
+.bar { display: grid; grid-template-columns: 110px 1fr 78px; align-items: center; gap: 10px; }
+.bar .track2 { background: var(--line-soft); border-radius: 4px; height: 22px; position: relative; }
+.bar .fill { height: 100%; border-radius: 4px; background: var(--ink); }
+.bar.tempo .fill { background: var(--plan); } .bar.oracle .fill { background: #8da3b0; }
+.bar .val { font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; text-align: right; }
+.audit-row { padding: 6px 0; border-bottom: 1px solid var(--line-soft); font-size: 14px; }
+.audit-row code { font-size: 12px; color: var(--muted); }
+footer { margin-top: 26px; color: var(--muted); font-size: 14px; max-width: 90ch; }
+.toast-err { color: var(--risk); font-weight: 600; }
+
+@media (max-width: 560px) {
+  :root { --label-w: 112px; --cw: 30px; }
+  .ai-state { margin-left: 0; }
+  .bar { grid-template-columns: 76px 1fr 66px; gap: 6px; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <div class="brand">Tem<span>po</span></div>
+  <div class="tag">Decides when to service each machine, explains the plan in plain words, and checks it against a rulebook before a person approves it.</div>
+  <div class="ai-state" id="aiState" aria-live="polite"><span class="dot"></span><span>Checking server</span></div>
+</header>
+
+<h1 class="headline" id="headline">Loading the fleet</h1>
+<p class="subline" id="subline"></p>
+
+<section class="controls" aria-label="What-if settings">
+  <div class="presets" id="presets" role="group" aria-label="Example situations"><span class="lead">Try a situation</span></div>
+  <div class="sliders">
+    <div class="field"><label for="tech_weekday">Technicians on weekdays <output id="o_tech_weekday"></output></label>
+      <input id="tech_weekday" type="range" min="0" max="4" step="1"></div>
+    <div class="field"><label for="tech_weekend">Technicians on weekends <output id="o_tech_weekend"></output></label>
+      <input id="tech_weekend" type="range" min="0" max="3" step="1"></div>
+    <div class="field"><label for="parts_delay">Spare parts not yet in stock <output id="o_parts_delay"></output></label>
+      <input id="parts_delay" type="range" min="0" max="0.9" step="0.05"></div>
+    <div class="field"><label for="machines">Machines <output id="o_machines"></output></label>
+      <input id="machines" type="range" min="4" max="40" step="1"></div>
+    <div class="field"><label for="horizon">Days planned <output id="o_horizon"></output></label>
+      <input id="horizon" type="range" min="14" max="30" step="1"></div>
+    <div class="field"><label for="fleet">Condition of the machines</label>
+      <select id="fleet"><option value="stressed">Many near failure</option><option value="healthy">Mostly healthy</option></select>
+      <div class="btnrow" style="margin-top:8px"><button class="btn alt" id="newFleet" type="button">Try a different fleet</button></div></div>
+  </div>
+</section>
+
+<div class="layout">
+  <main>
+    <section class="card board-card" aria-label="Repair schedule">
+      <div class="pad">
+        <h2>Repair schedule</h2>
+        <div class="legend" aria-hidden="false">
+          <span><i class="lg-band"></i>When the machine may fail</span>
+          <span><i class="lg-tick"></i>Most likely day</span>
+          <span><i class="lg-mk"></i>Repair day</span>
+          <span><i class="lg-mk warn"></i>5% or more chance it fails first</span>
+          <span><i class="lg-mk risk"></i>20% or more</span>
+          <span><i class="lg-no"></i>No technicians</span>
+        </div>
+      </div>
+      <div class="scroller"><div class="grid" id="grid"><div class="empty" id="boardEmpty">Planning</div></div></div>
+      <div class="pad"><p class="small muted" id="boardNote" style="margin:8px 0 0">Select a machine to see its forecast and work order.</p></div>
+    </section>
+
+    <section class="card detail" id="detail" aria-live="polite" hidden></section>
+
+    <section class="card" id="revealCard">
+      <h2>Check the plan against what really happens</h2>
+      <p class="small muted" style="margin-top:0">This is a simulated factory, so we know when each machine will really fail. Tempo never sees that. Reveal it to see how the plan would have done.</p>
+      <div class="btnrow"><button class="btn alt" id="revealBtn" type="button">Reveal the real failure days</button></div>
+      <div id="revealOut"></div>
+    </section>
+  </main>
+
+  <aside>
+    <section class="card" id="explainCard" aria-live="polite">
+      <h2>Explanation and work orders</h2>
+      <div id="explainBody"><p class="muted">Planning</p></div>
+    </section>
+
+    <section class="card" id="approveCard">
+      <h2>Your decision</h2>
+      <div id="validatorBox"></div>
+      <div class="fieldrow"><label for="approver">Your name</label><input id="approver" maxlength="60" autocomplete="name"></div>
+      <div class="fieldrow"><label for="note">Note (optional)</label><textarea id="note" maxlength="300"></textarea></div>
+      <div class="btnrow">
+        <button class="btn go" id="approveBtn" type="button">Approve plan</button>
+        <button class="btn bad" id="rejectBtn" type="button">Reject plan</button>
+      </div>
+      <p class="small muted" id="approveHint" style="margin:8px 0 0"></p>
+      <div id="decisionOut" aria-live="polite"></div>
+      <details id="auditBox"><summary>Decision history</summary><div id="auditOut" class="small muted">Loading</div></details>
+    </section>
+  </aside>
+</div>
+
+<footer>
+  This is a simulated factory. Costs are assumptions: an unplanned failure costs about 13 times a planned repair. The AI writes the explanation and work orders, and a rulebook checks every plan, work order and number it uses. It cannot check whether the reasoning in the text is true, so a person still approves. The example procedures are demo text, not real maintenance instructions.
+</footer>
+</div>
+
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+const money = (n) => "$" + Math.round(n).toLocaleString("en-US");
+function h(tag, props, ...kids) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(props || {})) {
+    if (v === false || v == null) continue;
+    if (k === "class") e.className = v;
+    else if (k === "style") e.style.cssText = v;
+    else if (k.startsWith("on")) e.addEventListener(k.slice(2), v);
+    else e.setAttribute(k, v === true ? "" : v);
+  }
+  for (const kid of kids.flat()) {
+    if (kid == null || kid === false) continue;
+    e.append(kid.nodeType ? kid : document.createTextNode(String(kid)));
+  }
+  return e;
+}
+function clear(e) { while (e.firstChild) e.removeChild(e.firstChild); return e; }
+
+const state = { params: null, plan: null, explain: null, reveal: null, selected: null, health: null, planSeq: 0, pollTimer: null };
+const FIELDS = ["tech_weekday", "tech_weekend", "parts_delay", "machines", "horizon"];
+const PRESET_NAMES = { short_staffed: "Short-staffed", well_staffed: "Well-staffed", healthy_fleet: "Healthy fleet" };
+
+function qs(p) { return new URLSearchParams(p).toString(); }
+async function api(path, body) {
+  const opt = body === undefined ? {} : { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) };
+  const r = await fetch(path, opt);
+  let data = {};
+  try { data = await r.json(); } catch (e) { /* not JSON */ }
+  if (!r.ok) throw new Error(data.error || "The server could not do that.");
+  return data;
+}
+function savedName() { try { return localStorage.getItem("tempo_name") || ""; } catch (e) { return ""; } }
+function saveName(v) { try { localStorage.setItem("tempo_name", v); } catch (e) { /* ignore */ } }
+
+/* ---------- controls ---------- */
+function syncControls() {
+  for (const f of FIELDS) {
+    $(f).value = state.params[f];
+    $("o_" + f).textContent = f === "parts_delay" ? Math.round(state.params[f] * 100) + "%" : state.params[f];
+  }
+  $("fleet").value = state.params.fleet;
+  document.querySelectorAll("#presets .chip").forEach((b) => {
+    const p = state.health.presets[b.dataset.key];
+    b.setAttribute("aria-pressed", String(Object.entries(p).every(([k, v]) => String(state.params[k]) === String(v) || (k === "parts_delay" && +state.params[k] === +v))));
+  });
+}
+let debounce = null;
+function changed() { clearTimeout(debounce); debounce = setTimeout(loadPlan, 250); }
+function wireControls() {
+  for (const f of FIELDS) {
+    $(f).addEventListener("input", () => {
+      state.params[f] = f === "parts_delay" ? parseFloat($(f).value) : parseInt($(f).value, 10);
+      syncControls(); changed();
+    });
+  }
+  $("fleet").addEventListener("change", () => { state.params.fleet = $("fleet").value; syncControls(); changed(); });
+  $("newFleet").addEventListener("click", () => { state.params.seed = Math.floor(Math.random() * 100000); syncControls(); loadPlan(); });
+  $("revealBtn").addEventListener("click", doReveal);
+  $("approveBtn").addEventListener("click", () => decide("approve"));
+  $("rejectBtn").addEventListener("click", () => decide("reject"));
+  $("approver").value = savedName();
+  $("approver").addEventListener("change", () => saveName($("approver").value.trim()));
+  $("auditBox").addEventListener("toggle", () => { if ($("auditBox").open) loadAudit(); });
+}
+function buildPresets() {
+  const box = $("presets");
+  for (const [key, label] of Object.entries(PRESET_NAMES)) {
+    if (!state.health.presets[key]) continue;
+    box.append(h("button", { class: "chip", type: "button", "data-key": key, "aria-pressed": "false",
+      onclick: () => { state.params = { ...state.health.presets[key] }; syncControls(); loadPlan(); } }, label));
+  }
+}
+
+/* ---------- plan ---------- */
+async function loadPlan() {
+  const seq = ++state.planSeq;
+  stopPolling();
+  state.reveal = null;
+  clear($("revealOut"));
+  $("boardNote").textContent = "Planning ...";
+  try {
+    const plan = await api("/api/plan?" + qs(state.params));
+    if (seq !== state.planSeq) return;
+    state.plan = plan;
+    state.explain = null;
+    if (!plan.machines.some((m) => m.machine_id === state.selected)) state.selected = null;
+    renderAll();
+    loadExplainStatus(seq);
+  } catch (e) {
+    if (seq !== state.planSeq) return;
+    clear($("grid")).append(h("div", { class: "empty toast-err" }, e.message));
+  }
+}
+function risk(pct) { return pct >= 20 ? "risk" : pct >= 5 ? "warn" : ""; }
+
+function renderAll() { renderHeadline(); renderBoard(); renderDetail(); renderExplain(); renderValidator(); }
+
+function renderHeadline() {
+  const o = state.plan.overview;
+  const saved = o.expected_cost_do_nothing - o.expected_total_cost;
+  const pct = o.expected_cost_do_nothing ? Math.round(100 * saved / o.expected_cost_do_nothing) : 0;
+  const hd = $("headline");
+  clear(hd).append(
+    `${o.machines_with_repair_planned} of ${o.machines_total} machines get a repair in the next ${o.planning_days} days. Expected cost ${money(o.expected_total_cost)}`,
+    saved > 0 ? h("span", { class: "save" }, `, ${pct}% less than waiting for breakdowns (${money(o.expected_cost_do_nothing)}).`) : "."
+  );
+  const none = o.days_with_no_technicians || [];
+  $("subline").textContent = none.length
+    ? `No technicians on ${none.length} of the ${o.planning_days} days, so nothing can be repaired then.`
+    : "Technicians are available every day.";
+}
+
+function renderBoard() {
+  const p = state.plan, H = p.params.horizon, grid = clear($("grid"));
+  grid.style.setProperty("--days", H);
+  const noTech = p.days.map((d) => d.technicians === 0);
+  const rowsDiv = h("div", { role: "grid", "aria-label": "Repair schedule by machine and day" });
+
+  // shading behind everything
+  p.days.forEach((d) => {
+    if (noTech[d.day] || d.label === "Sat" || d.label === "Sun") {
+      grid.append(h("div", { class: "shade" + (noTech[d.day] ? "" : " wk"), style: `left: calc(var(--label-w) + var(--cw) * ${d.day}); width: var(--cw);` }));
+    }
+  });
+
+  const head = h("div", { class: "row head" }, h("div", { class: "lab" }, h("span", {}, "Day")),
+    h("div", { class: "cells" }, p.days.map((d) => h("span", {}, h("b", {}, d.label.slice(0, 1)), d.day))));
+  const tech = h("div", { class: "row techs" }, h("div", { class: "lab" }, h("span", {}, "Technicians")),
+    h("div", { class: "cells" }, p.days.map((d) => h("span", { class: d.technicians === 0 ? "zero" : "" }, d.technicians))));
+  rowsDiv.append(head, tech);
+
+  const ms = [...p.machines].sort((a, b) => {
+    const da = a.service_day == null ? 999 : a.service_day, db = b.service_day == null ? 999 : b.service_day;
+    return da - db || a.days_left_forecast.likely - b.days_left_forecast.likely;
+  });
+  for (const m of ms) rowsDiv.append(machineRow(m, H));
+  grid.append(rowsDiv);
+  $("boardNote").textContent = "Select a machine to see its forecast and work order.";
+}
+
+function machineRow(m, H) {
+  const f = m.days_left_forecast;
+  const track = h("div", { class: "track" });
+  const lo = Math.max(0, f.low), hi = Math.min(H - 1, f.high);
+  if (lo <= H - 1) {
+    track.append(h("div", { class: "band" + (f.high > H - 1 ? " cut" : ""), style: `left: calc(var(--cw) * ${lo}); width: calc(var(--cw) * ${hi - lo + 1});` }));
+    if (f.likely <= H - 1) track.append(h("div", { class: "tick", style: `left: calc(var(--cw) * ${f.likely} + var(--cw) / 2 - 1px);` }));
+  } else {
+    track.append(h("div", { class: "later", style: `right: 6px;` }, `fails in ${f.low} to ${f.high} days, after this plan`));
+  }
+  if (m.service_day != null) {
+    const pr = m.chance_of_failing_before_repair_percent;
+    track.append(h("div", { class: "mk " + risk(pr), style: `left: calc(var(--cw) * ${m.service_day} + 3px); width: calc(var(--cw) - 6px);`,
+      title: `Repair on day ${m.service_day}. Chance it fails first: ${pr}%` }, pr >= 5 ? pr + "%" : ""));
+  }
+  if (state.reveal) {
+    const t = state.reveal.true_days_left[m.machine_id];
+    if (t != null && t <= H - 1) track.append(h("div", { class: "truth", style: `left: calc(var(--cw) * ${t});`, title: `It really fails on day ${t}` }, "×"));
+  }
+  const label = h("div", { class: "lab" }, h("span", {}, "Machine " + m.machine_id),
+    h("small", {}, m.service_day != null ? `repair on day ${m.service_day}` : "no repair this period"));
+  const row = h("div", { class: "row machine", role: "row", tabindex: "0", "aria-selected": String(state.selected === m.machine_id),
+    "aria-label": `Machine ${m.machine_id}, ${m.service_day != null ? "repair on day " + m.service_day : "no repair planned"}` }, label, track);
+  const pick = () => { state.selected = m.machine_id; renderBoardSelection(); renderDetail(); $("detail").scrollIntoView({ block: "nearest", behavior: "smooth" }); };
+  row.addEventListener("click", pick);
+  row.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(); } });
+  row.dataset.mid = m.machine_id;
+  return row;
+}
+function renderBoardSelection() {
+  document.querySelectorAll(".row.machine").forEach((r) => r.setAttribute("aria-selected", String(+r.dataset.mid === state.selected)));
+}
+
+/* ---------- machine detail ---------- */
+function renderDetail() {
+  const box = $("detail");
+  const m = state.plan && state.plan.machines.find((x) => x.machine_id === state.selected);
+  if (!m) { box.hidden = true; return; }
+  box.hidden = false;
+  clear(box);
+  const f = m.days_left_forecast;
+  const ex = state.explain && state.explain.status === "done" ? state.explain.result : null;
+  box.append(h("h2", {}, "Machine " + m.machine_id));
+  const dl = h("dl", {},
+    h("dt", {}, "Repair"), h("dd", {}, m.service_day != null ? `day ${m.service_day} (${state.plan.days[m.service_day].label}), ${m.technicians_on_that_day} technician${m.technicians_on_that_day === 1 ? "" : "s"} on shift, production ${m.production_that_day}` : "none planned in this period"),
+    h("dt", {}, "Days left, forecast"), h("dd", {}, `${f.low} to ${f.high}, most likely ${f.likely}`),
+    h("dt", {}, "Chance it fails first"), h("dd", {}, m.chance_of_failing_before_repair_percent + "%"),
+    h("dt", {}, "Main warning sign"), h("dd", {}, `${m.main_warning_sensor.replace(/_/g, " ")}, ${m.sensor_wear_percent}% of the way to worn out`),
+    h("dt", {}, "Expected cost"), h("dd", {}, `${money(m.expected_cost)} with this plan, ${money(m.cost_if_no_repair)} with no repair`),
+    h("dt", {}, "Spare part"), h("dd", {}, m.parts_ready_day === 0 ? "in stock" : `arrives on day ${m.parts_ready_day}`));
+  box.append(dl);
+  const reason = ex && ex.reasons[String(m.machine_id)];
+  if (reason) box.append(h("div", { class: "reason" }, h("div", { class: "small muted" }, ex.mode === "ai" ? "AI-written explanation" : "Plain explanation"), reason));
+  const wo = ex && ex.work_orders.find((o) => o.machine_id === m.machine_id);
+  if (wo) {
+    box.append(h("h3", {}, "Work order", sourceBadge(wo.source)),
+      h("div", { class: "small muted" }, `Day ${wo.service_day}`),
+      h("h3", {}, "Safety first"), h("ol", { class: "steps" }, wo.safety_steps.map((s) => h("li", {}, s))),
+      h("h3", {}, "Steps"), h("ol", { class: "steps" }, wo.steps.map((s) => h("li", {}, s))));
+  } else if (m.service_day != null) {
+    box.append(h("p", { class: "small muted" }, "Write the explanation and work orders (right) to see this machine's order."));
+  }
+}
+function sourceBadge(src) {
+  const text = { llm: "AI-written, rule-checked", llm_repaired: "AI-written, fixed after a rule check", template: "Standard template" }[src] || src;
+  return h("span", { class: "src " + (src === "template" ? "" : "ai") }, text);
+}
+
+/* ---------- explanation ---------- */
+function stopPolling() { if (state.pollTimer) { clearTimeout(state.pollTimer); state.pollTimer = null; } }
+async function loadExplainStatus(seq) {
+  try {
+    const st = await api("/api/explain?" + qs(state.params));
+    if (seq !== state.planSeq) return;
+    state.explain = st; renderExplain(); renderDetail();
+    if (st.status === "running") poll(seq);
+  } catch (e) { /* the button still works */ }
+}
+async function startExplain() {
+  const seq = state.planSeq;
+  try {
+    const st = await api("/api/explain", state.params);
+    if (seq !== state.planSeq) return;
+    state.explain = st; renderExplain(); renderDetail();
+    if (st.status === "running") poll(seq);
+  } catch (e) { clear($("explainBody")).append(h("div", { class: "note risk" }, e.message)); }
+}
+function poll(seq) {
+  stopPolling();
+  state.pollTimer = setTimeout(async () => {
+    try {
+      const st = await api("/api/explain?" + qs(state.params));
+      if (seq !== state.planSeq) return;
+      state.explain = st; renderExplain(); renderDetail();
+      if (st.status === "running") poll(seq);
+    } catch (e) { poll(seq); }
+  }, 1500);
+}
+function renderExplain() {
+  const box = clear($("explainBody"));
+  const st = state.explain;
+  const scheduled = state.plan ? state.plan.overview.machines_with_repair_planned : 0;
+  if (!st || st.status === "none") {
+    box.append(h("p", { class: "muted", style: "margin-top:0" }, `An AI model running on AMD GPUs explains the plan and drafts ${scheduled} work orders. Every order is checked by the rulebook before you see it.`),
+      h("div", { class: "btnrow" }, h("button", { class: "btn go", type: "button", onclick: startExplain }, "Write explanation and work orders")));
+    updateDecisionButtons(); return;
+  }
+  if (st.status === "running") {
+    box.append(h("p", {}, h("span", { class: "spin" }), "Writing the explanation and work orders. This takes about half a minute."));
+    updateDecisionButtons(); return;
+  }
+  const r = st.result;
+  if (r.notice) box.append(h("div", { class: "note " + (r.mode === "ai" ? "warn" : "info") }, r.notice));
+  box.append(h("p", { style: "margin-top:0" }, r.summary));
+  box.append(h("div", { class: "small muted" },
+    r.mode === "ai" ? `AI draft by ${r.model}. ` : "Written without AI. ",
+    st.result.from_cache ? "Saved from an earlier run. " : ""));
+  const s = r.stats || {};
+  if (r.mode === "ai" && s.work_orders) {
+    box.append(h("p", { class: "small" },
+      `The rulebook checked ${s.work_orders} work orders: ${s.llm_valid_first_try} were valid as written` +
+      (s.llm_valid_after_repair ? `, ${s.llm_valid_after_repair} were fixed after feedback` : "") +
+      (s.template_fallback ? `, ${s.template_fallback} were replaced by the standard template.` : ".")));
+  }
+  if (r.unverified_numbers && r.unverified_numbers.length) {
+    box.append(h("div", { class: "note risk" }, h("strong", {}, "Check these numbers: "), r.unverified_numbers.join(" ")));
+  } else if (r.mode === "ai") {
+    box.append(h("p", { class: "small" }, h("span", { class: "badge ok" }, "Numbers verified"), " Every cost and percentage in the text exists in the plan data."));
+  }
+  const det = h("details", {}, h("summary", {}, `Work orders (${r.work_orders.length})`));
+  for (const o of r.work_orders) {
+    det.append(h("p", { style: "margin:8px 0 2px" }, h("strong", {}, `Machine ${o.machine_id}, day ${o.service_day}`), sourceBadge(o.source)),
+      h("ol", { class: "steps small" }, o.safety_steps.map((x) => h("li", {}, x)), o.steps.map((x) => h("li", {}, x))));
+  }
+  box.append(det);
+  updateDecisionButtons();
+}
+
+/* ---------- validator and decision ---------- */
+function renderValidator() {
+  const box = clear($("validatorBox"));
+  const v = state.plan.validator;
+  const errors = v.findings.filter((f) => f.severity === "error"), warns = v.findings.filter((f) => f.severity !== "error");
+  box.append(h("p", { style: "margin-top:0" },
+    v.ok ? h("span", { class: "badge ok" }, "Plan passes the rulebook") : h("span", { class: "badge risk" }, "Plan breaks the rules"),
+    " ", h("span", { class: "small muted" }, "No repair without a technician or a spare part, none outside the planning period.")));
+  [...errors, ...warns].forEach((f) => box.append(h("div", { class: "note " + (f.severity === "error" ? "risk" : "warn") }, f.message)));
+  updateDecisionButtons();
+}
+function updateDecisionButtons() {
+  if (!state.plan) return;
+  const ready = state.explain && state.explain.status === "done";
+  $("approveBtn").disabled = !(state.plan.validator.ok && ready);
+  const st = state.explain && state.explain.status;
+  $("approveHint").textContent = !state.plan.validator.ok ? "This plan breaks the rules, so it cannot be approved. You can still reject it."
+    : ready ? ""
+    : st === "running" ? "Approval unlocks when the explanation is finished, so you approve what you have read."
+    : "Write the explanation and work orders first, so you approve what you have read.";
+}
+async function decide(decision) {
+  const out = clear($("decisionOut"));
+  const name = $("approver").value.trim();
+  if (!name) { out.append(h("div", { class: "note risk" }, "Enter your name first.")); $("approver").focus(); return; }
+  saveName(name);
+  try {
+    const r = await api("/api/approve", { params: state.params, approver: name, decision, note: $("note").value });
+    out.append(h("div", { class: "note ok" }, `${decision === "approve" ? "Approved" : "Rejected"} and recorded as entry ${r.entries}. Fingerprint ${r.hash.slice(0, 12)}.`));
+    if ($("auditBox").open) loadAudit();
+  } catch (e) { out.append(h("div", { class: "note risk" }, e.message)); }
+}
+async function loadAudit() {
+  const box = clear($("auditOut"));
+  try {
+    const a = await api("/api/audit");
+    box.append(h("p", { style: "margin:0 0 6px" }, a.chain.ok
+      ? h("span", { class: "badge ok" }, `Log intact, ${a.chain.entries} entr${a.chain.entries === 1 ? "y" : "ies"}`)
+      : h("span", { class: "badge risk" }, `Log was changed, first bad entry ${a.chain.first_bad_entry}`)));
+    if (!a.entries.length) box.append("No decisions yet.");
+    [...a.entries].reverse().forEach((e) => {
+      if (e.corrupt_line) { box.append(h("div", { class: "audit-row" }, "Unreadable line")); return; }
+      box.append(h("div", { class: "audit-row" },
+        h("strong", {}, e.decision === "approve" ? "Approved" : "Rejected"), ` by ${e.approver}, ${money(e.expected_cost)} expected`,
+        e.note ? h("div", {}, "Note: " + e.note) : null,
+        h("div", {}, h("code", {}, `${e.ts} ${e.hash.slice(0, 12)}`))));
+    });
+  } catch (e) { box.append(h("span", { class: "toast-err" }, e.message)); }
+}
+
+/* ---------- reveal ---------- */
+async function doReveal() {
+  const out = clear($("revealOut"));
+  out.append(h("p", {}, h("span", { class: "spin" }), "Scoring"));
+  try {
+    const r = await api("/api/reveal?" + qs(state.params));
+    state.reveal = r;
+    renderBoard();
+    clear(out);
+    const max = Math.max(r.do_nothing.cost, r.tempo.cost, r.oracle.cost, 1);
+    const bar = (cls, name, x) => h("div", { class: "bar " + cls }, h("span", {}, name),
+      h("div", { class: "track2" }, h("div", { class: "fill", style: `width:${Math.max(3, 100 * x.cost / max)}%` })), h("span", { class: "val" }, money(x.cost)));
+    out.append(h("div", { class: "bars" },
+      bar("nothing", "Wait for breakdowns", r.do_nothing), bar("tempo", "Tempo's plan", r.tempo), bar("oracle", "Perfect foresight", r.oracle)),
+      h("p", { class: "small" }, `Failures before repair: ${r.tempo.failures} with Tempo, ${r.do_nothing.failures} if nothing is done. The × marks on the schedule show the real failure days.`),
+      h("p", { class: "small muted" }, "Perfect foresight is a cheat that knows the true failure days. It shows the best anyone could do. One fleet is one example, not a promise. The README reports the average over 60 fleets, including the cases where simple rules do as well or better."));
+    $("boardNote").textContent = "× marks the day the machine really fails in this simulation.";
+  } catch (e) { clear(out).append(h("div", { class: "note risk" }, e.message)); }
+}
+
+/* ---------- start ---------- */
+async function init() {
+  try {
+    state.health = await api("/api/health");
+  } catch (e) {
+    clear($("grid")).append(h("div", { class: "empty toast-err" }, "Could not reach the Tempo server. Start it with: python -m tempo.api.server"));
+    return;
+  }
+  const ai = $("aiState");
+  clear(ai).append(h("span", { class: "dot " + (state.health.ai === "configured" ? "on" : "") }),
+    h("span", {}, state.health.ai === "configured" ? `AI on AMD GPUs: ${state.health.model}` : "AI offline: plain explanations"));
+  state.params = { ...state.health.presets.short_staffed };
+  buildPresets(); wireControls(); syncControls();
+  loadPlan();
+}
+init();
+</script>
+</body>
+</html>

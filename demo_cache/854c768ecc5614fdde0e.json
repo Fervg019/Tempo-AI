@@ -1,0 +1,189 @@
+{
+ "mode": "ai",
+ "notice": "Some AI replies were unusable and were replaced by the rulebook's fallbacks.",
+ "model": "DeepSeek-V4-Flash",
+ "summary": "Nine machines are scheduled for repair over the next 21 days, with a total expected cost of $73,442. Three machines are not planned for repair. No repairs are scheduled on day 11 due to no technicians. The plan prioritizes machines with higher wear or earlier failure forecasts.",
+ "reasons": {
+  "0": "Sensor wear is at 100% and the likely failure forecast is 4 days, so it is repaired today.",
+  "1": "Sensor wear is 62% and the likely failure forecast is 11 days, so it is scheduled on day 3.",
+  "4": "Sensor wear is 100% and the likely failure forecast is 15 days, so it is scheduled on day 6.",
+  "5": "Sensor wear is 64% and the likely failure forecast is 21 days, so it is scheduled on day 12.",
+  "6": "Sensor wear is 100% and the likely failure forecast is 24 days, so it is scheduled on day 13.",
+  "7": "Sensor wear is 83% and the chance of failing before repair is 28%, so it is scheduled on day 8.",
+  "9": "Sensor wear is 88% and the likely failure forecast is 12 days, so it is scheduled on day 5.",
+  "10": "Sensor wear is 93% and the likely failure forecast is 2 days, so it is scheduled on day 1.",
+  "11": "Sensor wear is 100% and the likely failure forecast is 4 days, so it is repaired today."
+ },
+ "work_orders": [
+  {
+   "machine_id": 0,
+   "service_day": 0,
+   "title": null,
+   "steps": [
+    "Inspect pressure lines, fittings and seals for leaks or cracking.",
+    "Replace worn seals and damaged hose sections.",
+    "Check the pressure relief valve operates freely.",
+    "Function test before restart."
+   ],
+   "safety_steps": [
+    "Apply lockout/tagout to the machine's main power isolator and keep the key with the technician.",
+    "Isolate all stored energy (electrical, pressure, spring) and verify zero energy before opening any guard.",
+    "Wear protective equipment: safety glasses, gloves and hearing protection."
+   ],
+   "source": "llm"
+  },
+  {
+   "machine_id": 11,
+   "service_day": 0,
+   "title": null,
+   "steps": [
+    "Inspect pressure lines, fittings and seals for leaks or cracking.",
+    "Replace worn seals and damaged hose sections.",
+    "Check the pressure relief valve operates freely.",
+    "Function test before restart."
+   ],
+   "safety_steps": [
+    "Apply lockout/tagout to the machine's main power isolator and keep the key with the technician.",
+    "Isolate all stored energy (electrical, pressure, spring) and verify zero energy before opening any guard.",
+    "Wear protective equipment: safety glasses, gloves and hearing protection."
+   ],
+   "source": "llm"
+  },
+  {
+   "machine_id": 10,
+   "service_day": 1,
+   "title": null,
+   "steps": [
+    "Inspect fans, cooling fins and coolant lines for blockage or leaks.",
+    "Clean or replace filters and top up coolant.",
+    "Check lubricant level and condition.",
+    "Function test before restart."
+   ],
+   "safety_steps": [
+    "Apply lockout/tagout to the machine's main power isolator and keep the key with the technician.",
+    "Isolate all stored energy (electrical, pressure, spring) and verify zero energy before opening any guard.",
+    "Wear protective equipment: safety glasses, gloves and hearing protection."
+   ],
+   "source": "llm"
+  },
+  {
+   "machine_id": 1,
+   "service_day": 3,
+   "title": null,
+   "steps": [
+    "Remove the guard and inspect the bearing housings for heat marks, play and noise.",
+    "Replace worn bearings and check shaft alignment.",
+    "Re-grease to the machine's specified grease.",
+    "Function test the machine before restart."
+   ],
+   "safety_steps": [
+    "Apply lockout/tagout to the machine's main power isolator and keep the key with the technician.",
+    "Isolate all stored energy (electrical, pressure, spring) and verify zero energy before opening any guard.",
+    "Wear protective equipment: safety glasses, gloves and hearing protection."
+   ],
+   "source": "llm"
+  },
+  {
+   "machine_id": 9,
+   "service_day": 5,
+   "title": null,
+   "steps": [
+    "Inspect gears, belts and couplings for wear, looseness or misalignment.",
+    "Replace worn drive components and tighten fixings.",
+    "Check lubrication of all moving contacts.",
+    "Function test the machine before restart."
+   ],
+   "safety_steps": [
+    "Apply lockout/tagout to the machine's main power isolator and keep the key with the technician.",
+    "Isolate all stored energy (electrical, pressure, spring) and verify zero energy before opening any guard.",
+    "Wear protective equipment: safety glasses, gloves and hearing protection."
+   ],
+   "source": "llm_repaired"
+  },
+  {
+   "machine_id": 4,
+   "service_day": 6,
+   "title": null,
+   "steps": [
+    "Inspect pressure lines, fittings and seals for leaks or cracking.",
+    "Replace worn seals and damaged hose sections.",
+    "Check the pressure relief valve operates freely.",
+    "Function test the machine before restart."
+   ],
+   "safety_steps": [
+    "Apply lockout/tagout to the machine's main power isolator and keep the key with the technician.",
+    "Isolate all stored energy (electrical, pressure, spring) and verify zero energy before opening any guard.",
+    "Wear protective equipment: safety glasses, gloves and hearing protection."
+   ],
+   "source": "llm"
+  },
+  {
+   "machine_id": 7,
+   "service_day": 8,
+   "title": null,
+   "steps": [
+    "Inspect motor terminals and cables for heat damage or loose connections.",
+    "Check drive settings and the motor's insulation condition.",
+    "Check the load for jams or binding that would raise current draw.",
+    "Function test the motor and drive before restart."
+   ],
+   "safety_steps": [
+    "Apply lockout/tagout to the machine's main power isolator and keep the key with the technician.",
+    "Isolate all stored energy (electrical, pressure, spring) and verify zero energy before opening any guard.",
+    "Wear protective equipment: safety glasses, gloves and hearing protection."
+   ],
+   "source": "llm"
+  },
+  {
+   "machine_id": 5,
+   "service_day": 12,
+   "title": null,
+   "steps": [
+    "Inspect gears, belts and couplings for wear, looseness or misalignment.",
+    "Replace worn drive components and tighten fixings.",
+    "Check lubrication of all moving contacts.",
+    "Function test the gear and coupling assembly before restart."
+   ],
+   "safety_steps": [
+    "Apply lockout/tagout to the machine's main power isolator and keep the key with the technician.",
+    "Isolate all stored energy (electrical, pressure, spring) and verify zero energy before opening any guard.",
+    "Wear protective equipment: safety glasses, gloves and hearing protection."
+   ],
+   "source": "llm"
+  },
+  {
+   "machine_id": 6,
+   "service_day": 13,
+   "title": null,
+   "steps": [
+    "Inspect pressure lines, fittings and seals for leaks or cracking.",
+    "Replace worn seals and damaged hose sections.",
+    "Check the pressure relief valve operates freely.",
+    "Function test the seal and pressure line system before restart."
+   ],
+   "safety_steps": [
+    "Apply lockout/tagout to the machine's main power isolator and keep the key with the technician.",
+    "Isolate all stored energy (electrical, pressure, spring) and verify zero energy before opening any guard.",
+    "Wear protective equipment: safety glasses, gloves and hearing protection."
+   ],
+   "source": "llm"
+  }
+ ],
+ "unverified_numbers": [],
+ "stats": {
+  "work_orders": 9,
+  "llm_valid_first_try": 8,
+  "llm_valid_after_repair": 1,
+  "template_fallback": 0,
+  "first_try_valid_rate": 0.8888888888888888,
+  "unverified_numbers_in_text": 0,
+  "problems_caught": 1,
+  "rules_in_prompt": 1.0
+ },
+ "llm_calls": 6,
+ "llm_errors": [
+  "asked for machines [1, 9, 4]; reply had 2 order(s) matching [1, 4]; first item looks like: ['machine_id', 'safety_steps', 'service_day', 'steps']"
+ ],
+ "generated_at": "2026-10-14T20:58:24Z",
+ "plan_sha256": "a959e7f0cda956865e24c752a527b6768d897014826073802772a57796532cc1"
+}

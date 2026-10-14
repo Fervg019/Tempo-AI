@@ -154,3 +154,12 @@ def test_prompts_never_contain_a_concrete_example_id_the_model_could_copy():
     for prompt in (EXPLAIN_SYSTEM, ORDER_SYSTEM, ORDER_SYSTEM_BARE):
         assert '"machine_id": 3' not in prompt and '"service_day": 5' not in prompt
         assert "<id>" in prompt
+
+
+def test_facts_tell_the_model_which_days_have_no_technicians(setup):
+    sc, plan, q, feats = setup
+    facts = build_facts(sc, plan, q, feats)
+    none_days = facts["overview"]["days_with_no_technicians"]
+    assert none_days == [d for d in range(sc.horizon) if sc.technicians[d] == 0]
+    assert none_days                                     # this fixture has weekends with nobody on shift
+    assert all(plan.service_day[i] not in none_days for i in range(sc.n_machines) if plan.service_day[i] < sc.horizon)

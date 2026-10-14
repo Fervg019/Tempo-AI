@@ -32,7 +32,10 @@ EXPLAIN_SYSTEM = (
     "You are a maintenance planning assistant writing for a factory supervisor. An optimizer has ALREADY "
     "computed a repair plan. Your job is only to explain it in plain, short sentences. Rules: use ONLY numbers "
     "that appear in the facts; never invent machines, days, costs or chances; never change the plan; write "
-    "costs as full numbers like $12,345 (never abbreviate). Day 0 is today. Reply with ONLY a JSON object: "
+    "costs as full numbers like $12,345 (never abbreviate). Day 0 is today. Repairs cannot happen on the days "
+    "listed in days_with_no_technicians. Do NOT guess why the optimizer chose a day beyond what the facts show, "
+    "and do NOT say a machine has a 0% chance or no risk unless its chance_of_failing_before_repair_percent is 0. "
+    "Reply with ONLY a JSON object: "
     '{"summary": "3 to 5 sentences for the whole fleet", "machines": [{"machine_id": <id>, "reason": "at most 2 '
     'sentences"}]} with one entry per machine that has a repair planned, using the real machine_id values from the facts '
     '(<id> is a placeholder, not a real value).'
@@ -129,6 +132,7 @@ def build_facts(scenario: Scenario, plan, quantile_values: np.ndarray, latest_fe
         "machines_with_repair_planned": int((plan.service_day < H).sum()),
         "machines_without_repair_planned": int((plan.service_day >= H).sum()),
         "expected_total_cost": int(round(plan.expected_cost)),
+        "days_with_no_technicians": [int(d) for d in range(H) if int(scenario.technicians[d]) == 0],
     }
     return {"overview": overview, "machines": machines}
 

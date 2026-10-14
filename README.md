@@ -20,7 +20,7 @@ Built for the AMD Developer Hackathon ACT III (Intelligent Industry track).
 | Strategy comparison on unseen fleets | done (results below) |
 | Validator (plan rules, work-order safety checklist, unverified-number check) | done |
 | LLM explainer (Token Factory API; offline stand-in model; template fallback) | done and tested offline; real-API run pending |
-| Backend + app | next |
+| Backend (planning, AI job with cache and limits, tamper-evident decision log) + supervisor screen | done, tested offline; real-AI run in the app pending |
 | Final evaluation (cost sensitivity) | next |
 
 ## Data honesty
@@ -63,6 +63,31 @@ The key goes in a `.env` file (copy `.env.example`), which git ignores. Then:
 ```
 
 Note: the "sloppy" model is scripted, so its 25% first-try rate shows the pipeline works, not how good a real model is. The real rate is measured with `explain_plan(..., tell_model_the_rules=False)`, which leaves the safety rules out of the prompt.
+
+## The app (supervisor screen)
+
+```powershell
+.\venv\Scripts\python.exe -m tempo.api.server        # then open http://127.0.0.1:8000
+.\venv\Scripts\python.exe -m tempo.api.server --warm  # once: saves the AI text for the 3 example situations
+```
+
+Standard library only, so nothing extra to install. The first start trains the forecaster (about 10 seconds) and saves it in `.cache/`.
+
+- **Schedule board:** machines down the side, days across. The pale band is when the machine may fail, the tick is its most likely day, the block is the repair. Days with no technicians are hatched. Settings (technicians, parts, fleet size, condition) re-plan instantly.
+- **Explanation and work orders:** an AI model on AMD GPUs writes them in the background. Results are cached on disk (`demo_cache/`), so repeat visits are instant and do not use the API. Limits: 40 AI runs a day and 6 per visitor per hour (`TEMPO_DAILY_AI`, `TEMPO_VISITOR_AI`); past that, or with no key, the screen shows a plain no-AI version and says so.
+- **Rulebook:** the plan, each work order and every number in the text are checked. A person can only approve after reading the explanation.
+- **Decision history:** every approval or rejection is a line in `data/audit.jsonl`, each linked to the previous one by a hash. Editing or deleting an old line is detected and shown. Someone who can rewrite the whole file can still replace the history; this makes quiet edits detectable, not impossible.
+- **Reveal:** because the factory is simulated, the screen can show each machine's real failure day (the planner never sees it) and the cost of the plan against waiting for breakdowns and against perfect foresight.
+- The key stays on the server (`.env`) and is never sent to the browser.
+
+## Public demo
+
+`Dockerfile` builds the app (the forecaster is trained while the image is built, so it starts in seconds). It runs on any host that builds from a Dockerfile; we use Render's free tier:
+
+- Create a Web Service from this GitHub repo, runtime Docker, instance type Free.
+- Environment variable `RADEON_API_KEY` = your Token Factory key (a secret on the host, never in the repo). Optional: `TEMPO_MODEL`, `TEMPO_DAILY_AI`, `TEMPO_VISITOR_AI`.
+- Free instances sleep after 15 minutes without visitors (the first visit then takes about a minute) and their disk resets on restart, so the decision log on the demo is not permanent.
+- Visitors are limited to a few AI runs per hour and a few decisions per hour, the log is capped at 5000 entries, and at most 3 plans are computed at the same time.
 
 ## Setup on Windows (PowerShell)
 

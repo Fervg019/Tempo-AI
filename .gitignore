@@ -9,3 +9,4 @@ models/
 *.joblib
 *.sqlite
 .DS_Store
+.cache/

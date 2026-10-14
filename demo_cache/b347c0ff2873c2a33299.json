@@ -1,0 +1,133 @@
+{
+ "mode": "ai",
+ "notice": null,
+ "model": "DeepSeek-V4-Flash",
+ "summary": "Six machines are scheduled for repair over the next 13 days, with a total expected cost of $48,438. No repairs are planned on day 19 because no technicians are available. The remaining six machines are not scheduled for repair within the planning period. All scheduled repairs have a 0% chance of failing before their repair day.",
+ "reasons": {
+  "0": "Pressure sensor wear is 81% and the forecast low is 17 days, so repair is set for day 12 before the earliest likely failure.",
+  "1": "Pressure sensor wear is 100% and the forecast low is 7 days, so repair is set for day 6 to stay within the safe window.",
+  "3": "Pressure sensor wear is 100% and the forecast low is 5 days, so repair is set for day 3 as the earliest safe day.",
+  "4": "Pressure sensor wear is 100% and the forecast low is 10 days, so repair is set for day 9 before the earliest likely failure.",
+  "8": "Current sensor wear is 87% and the forecast low is 16 days, so repair is set for day 13 before the earliest likely failure.",
+  "10": "Pressure sensor wear is 97% and the forecast low is 12 days, so repair is set for day 11 before the earliest likely failure."
+ },
+ "work_orders": [
+  {
+   "machine_id": 3,
+   "service_day": 3,
+   "title": null,
+   "steps": [
+    "Inspect pressure lines, fittings and seals for leaks or cracking.",
+    "Replace worn seals and damaged hose sections.",
+    "Check the pressure relief valve operates freely.",
+    "Function test before restart."
+   ],
+   "safety_steps": [
+    "Apply lockout/tagout to the machine's main power isolator and keep the key with the technician.",
+    "Isolate all stored energy (electrical, pressure, spring) and verify zero energy before opening any guard.",
+    "Wear protective equipment: safety glasses, gloves and hearing protection."
+   ],
+   "source": "llm"
+  },
+  {
+   "machine_id": 1,
+   "service_day": 6,
+   "title": null,
+   "steps": [
+    "Inspect pressure lines, fittings and seals for leaks or cracking.",
+    "Replace worn seals and damaged hose sections.",
+    "Check the pressure relief valve operates freely.",
+    "Function test before restart."
+   ],
+   "safety_steps": [
+    "Apply lockout/tagout to the machine's main power isolator and keep the key with the technician.",
+    "Isolate all stored energy (electrical, pressure, spring) and verify zero energy before opening any guard.",
+    "Wear protective equipment: safety glasses, gloves and hearing protection."
+   ],
+   "source": "llm"
+  },
+  {
+   "machine_id": 4,
+   "service_day": 9,
+   "title": null,
+   "steps": [
+    "Inspect pressure lines, fittings and seals for leaks or cracking.",
+    "Replace worn seals and damaged hose sections.",
+    "Check the pressure relief valve operates freely.",
+    "Function test before restart."
+   ],
+   "safety_steps": [
+    "Apply lockout/tagout to the machine's main power isolator and keep the key with the technician.",
+    "Isolate all stored energy (electrical, pressure, spring) and verify zero energy before opening any guard.",
+    "Wear protective equipment: safety glasses, gloves and hearing protection."
+   ],
+   "source": "llm"
+  },
+  {
+   "machine_id": 10,
+   "service_day": 11,
+   "title": null,
+   "steps": [
+    "Inspect pressure lines, fittings and seals for leaks or cracking.",
+    "Replace worn seals and damaged hose sections.",
+    "Check the pressure relief valve operates freely.",
+    "Function test before restart."
+   ],
+   "safety_steps": [
+    "Apply lockout/tagout to the machine's main power isolator and keep the key with the technician.",
+    "Isolate all stored energy (electrical, pressure, spring) and verify zero energy before opening any guard.",
+    "Wear protective equipment: safety glasses, gloves and hearing protection."
+   ],
+   "source": "llm"
+  },
+  {
+   "machine_id": 0,
+   "service_day": 12,
+   "title": null,
+   "steps": [
+    "Inspect pressure lines, fittings and seals for leaks or cracking.",
+    "Replace worn seals and damaged hose sections.",
+    "Check the pressure relief valve operates freely.",
+    "Function test before restart."
+   ],
+   "safety_steps": [
+    "Apply lockout/tagout to the machine's main power isolator and keep the key with the technician.",
+    "Isolate all stored energy (electrical, pressure, spring) and verify zero energy before opening any guard.",
+    "Wear protective equipment: safety glasses, gloves and hearing protection."
+   ],
+   "source": "llm"
+  },
+  {
+   "machine_id": 8,
+   "service_day": 13,
+   "title": null,
+   "steps": [
+    "Inspect motor terminals and cables for heat damage or loose connections.",
+    "Check drive settings and the motor's insulation condition.",
+    "Check the load for jams or binding that would raise current draw.",
+    "Function test before restart."
+   ],
+   "safety_steps": [
+    "Apply lockout/tagout to the machine's main power isolator and keep the key with the technician.",
+    "Isolate all stored energy (electrical, pressure, spring) and verify zero energy before opening any guard.",
+    "Wear protective equipment: safety glasses, gloves and hearing protection."
+   ],
+   "source": "llm"
+  }
+ ],
+ "unverified_numbers": [],
+ "stats": {
+  "work_orders": 6,
+  "llm_valid_first_try": 6,
+  "llm_valid_after_repair": 0,
+  "template_fallback": 0,
+  "first_try_valid_rate": 1.0,
+  "unverified_numbers_in_text": 0,
+  "problems_caught": 0,
+  "rules_in_prompt": 1.0
+ },
+ "llm_calls": 3,
+ "llm_errors": [],
+ "generated_at": "2026-10-14T20:59:06Z",
+ "plan_sha256": "79a2970f07bc8247d3a820ca776393ca139a79b35a77e3617bf3666229a05c95"
+}
