@@ -163,3 +163,20 @@ def test_facts_tell_the_model_which_days_have_no_technicians(setup):
     assert none_days == [d for d in range(sc.horizon) if sc.technicians[d] == 0]
     assert none_days                                     # this fixture has weekends with nobody on shift
     assert all(plan.service_day[i] not in none_days for i in range(sc.n_machines) if plan.service_day[i] < sc.horizon)
+
+
+
+def test_repair_request_shows_the_model_its_previous_draft_and_the_full_checklist(setup):
+    import json
+    sc, plan, q, feats = setup
+    seen = []
+
+    class Spy(FakeLLM):
+        def chat_json(self, messages, *a, **k):
+            seen.append(json.loads(messages[-1]["content"]))
+            return super().chat_json(messages, *a, **k)
+
+    explain_plan(Spy("sloppy"), sc, plan, q, feats)
+    repair = [p for p in seen if "fix_these_problems" in p]
+    assert repair
+    assert all("your_previous_drafts" in p and "required_safety_checklist" in p for p in repair)

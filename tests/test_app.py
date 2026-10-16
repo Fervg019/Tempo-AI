@@ -242,3 +242,15 @@ def test_decisions_are_rate_limited_and_the_log_has_a_cap(models, tmp_path):
     assert app.approve(body, "5.6.7.8")["ok"]                 # another visitor is fine: this is the 3rd entry
     with pytest.raises(Conflict, match="full"):
         app.approve(body, "9.9.9.9")
+
+
+def test_saved_text_for_a_different_plan_is_ignored(models, tmp_path):
+    svc = make_service(models, tmp_path)
+    svc.start(SHORT)
+    wait_done(svc, SHORT)
+    path = svc._disk_path(svc.key(SHORT))
+    saved = json.loads(path.read_text())
+    saved["plan_sha256"] = "0" * 64                                   # as if it was written for another plan
+    path.write_text(json.dumps(saved))
+    svc2 = make_service(models, tmp_path, llm=None)
+    assert svc2.status(SHORT)["status"] == "none"

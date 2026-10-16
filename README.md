@@ -19,9 +19,10 @@ Built for the AMD Developer Hackathon ACT III (Intelligent Industry track).
 | Planner (Monte Carlo cost matrix + exact assignment) | done on CPU (NumPy); PyTorch/GPU path written, **not yet run** |
 | Strategy comparison on unseen fleets | done (results below) |
 | Validator (plan rules, work-order safety checklist, unverified-number check) | done |
-| LLM explainer (Token Factory API; offline stand-in model; template fallback) | done and tested offline; real-API run pending |
-| Backend (planning, AI job with cache and limits, tamper-evident decision log) + supervisor screen | done, tested offline; real-AI run in the app pending |
-| Final evaluation (cost sensitivity) | next |
+| LLM explainer (AMD Token Factory API; offline stand-in model; template fallback) | done; tested offline and against the real model |
+| Backend (planning, AI job with cache and limits, tamper-evident decision log) + supervisor screen | done, running as a public demo |
+| Final evaluation: planner cost sensitivity | done (`eval/planner_eval.py`) |
+| Final evaluation: does the rulebook catch the AI's mistakes | done (`eval/llm_eval.py`, results below) |
 
 ## Data honesty
 
@@ -82,11 +83,13 @@ Standard library only, so nothing extra to install. The first start trains the f
 
 ## Public demo
 
-`Dockerfile` builds the app (the forecaster is trained while the image is built, so it starts in seconds). It runs on any host that builds from a Dockerfile; we use Render's free tier:
+Live demo: https://tempo-ai-669c3.containers.snapdeploy.app (all AI text on it comes from AMD Token Factory, DeepSeek-V4-Flash on AMD GPUs; the three preset situations have saved AI text so they open instantly).
 
-- Create a Web Service from this GitHub repo, runtime Docker, instance type Free.
+`Dockerfile` builds the app (the forecaster is trained while the image is built, so it starts in seconds). It runs on any host that builds from a Dockerfile; the demo runs on SnapDeploy's free tier:
+
+- Create a container from this GitHub repo (Dockerfile build, port 8080, health check `/api/health`).
 - Environment variable `RADEON_API_KEY` = your Token Factory key (a secret on the host, never in the repo). Optional: `TEMPO_MODEL`, `TEMPO_DAILY_AI`, `TEMPO_VISITOR_AI`.
-- Free instances sleep after 15 minutes without visitors (the first visit then takes about a minute) and their disk resets on restart, so the decision log on the demo is not permanent.
+- The free tier sleeps after 15 minutes without visitors (the first visit then takes about a minute to wake) and its disk resets on restart, so the decision log on the demo is not permanent.
 - Visitors are limited to a few AI runs per hour and a few decisions per hour, the log is capped at 5000 entries, and at most 3 plans are computed at the same time.
 
 ## Setup on Windows (PowerShell)
@@ -111,26 +114,64 @@ Run everything through `.\venv\Scripts\python.exe` (no need to activate the envi
 .\venv\Scripts\python.exe -m tempo.planner.demo --preset healthy        # machines mostly far from failure
 ```
 
-## Results (simulated fleets, 60 unseen fleets each, 30-day horizon, average cost per fleet)
+## Results
 
-Nothing is graded on data it learned from: the forecaster, the range calibration, the alarm threshold and the test fleets all use different random seeds. The baseline alarm's threshold is tuned on separate practice fleets, so it is a strong, fair opponent (an untuned alarm, e.g. 14 days, does far worse).
+Simulated fleets, 40 unseen fleets per row, 30-day horizon, average cost per fleet. Nothing is graded on data it learned from: the forecaster, the range calibration, the alarm threshold and the test fleets all use different random seeds. The baseline alarm (service a machine when its median forecast drops below N days) is tuned on separate practice fleets under each row's TRUE costs, a head start Tempo does not get. "Planner believes default costs (wrong)" means Tempo plans with the default cost numbers while reality uses the row's costs. The +/- is two standard errors, so differences smaller than that are not real.
 
-| Fleet type | Run to failure | Best tuned alarm | **Tempo** | Oracle (knows the truth, unreachable) |
+Reproduce with `python -m eval.planner_eval` (writes `eval/results/`).
+
+| Fleet | Costs | Failure vs planned repair | Planner believes | Run to failure | Tuned alarm | **Tempo** | Oracle | Tempo vs alarm | Cheaper in |
+|---|---|---|---|---|---|---|---|---|---|
+| standard | default costs | 13.6x | true costs | 1,143,672 | 240,355 | **279,439** | 166,483 | 16.3% dearer (+/- 9.4) | 38% of fleets |
+| standard | failures cheaper | 4.4x | true costs | 368,182 | 163,678 | **158,596** | 100,115 | 3.1% cheaper (+/- 6.0) | 57% of fleets |
+| standard | failures cheaper | 4.4x | default costs (wrong) | 368,182 | 163,678 | **156,039** | 100,115 | 4.7% cheaper (+/- 3.9) | 72% of fleets |
+| standard | failures much costlier | 27.2x | true costs | 2,287,344 | 338,195 | **431,836** | 264,323 | 27.7% dearer (+/- 11.4) | 40% of fleets |
+| standard | failures much costlier | 27.2x | default costs (wrong) | 2,287,344 | 338,195 | **461,439** | 264,323 | 36.4% dearer (+/- 13.5) | 33% of fleets |
+| standard | planned repairs costlier | 5.2x | true costs | 1,143,672 | 448,897 | **443,282** | 276,104 | 1.3% cheaper (+/- 6.3) | 50% of fleets |
+| standard | planned repairs costlier | 5.2x | default costs (wrong) | 1,143,672 | 448,897 | **436,578** | 276,104 | 2.7% cheaper (+/- 4.4) | 62% of fleets |
+| scarce | default costs | 13.6x | true costs | 1,644,284 | 940,779 | **739,602** | 372,152 | 21.4% cheaper (+/- 5.9) | 88% of fleets |
+| scarce | failures cheaper | 4.4x | true costs | 530,645 | 354,863 | **310,834** | 197,100 | 12.4% cheaper (+/- 4.1) | 85% of fleets |
+| scarce | failures cheaper | 4.4x | default costs (wrong) | 530,645 | 354,863 | **310,702** | 197,100 | 12.4% cheaper (+/- 4.2) | 75% of fleets |
+| scarce | failures much costlier | 27.2x | true costs | 3,288,568 | 1,805,107 | **1,363,991** | 632,392 | 24.4% cheaper (+/- 6.4) | 90% of fleets |
+| scarce | failures much costlier | 27.2x | default costs (wrong) | 3,288,568 | 1,805,107 | **1,373,002** | 632,392 | 23.9% cheaper (+/- 6.4) | 88% of fleets |
+| scarce | planned repairs costlier | 5.2x | true costs | 1,644,284 | 1,064,579 | **917,086** | 552,372 | 13.9% cheaper (+/- 4.4) | 82% of fleets |
+| scarce | planned repairs costlier | 5.2x | default costs (wrong) | 1,644,284 | 1,064,579 | **911,165** | 552,372 | 14.4% cheaper (+/- 4.6) | 78% of fleets |
+| healthy | default costs | 13.6x | true costs | 719,808 | 201,095 | **202,847** | 62,888 | 0.9% dearer (+/- 10.8) | 60% of fleets |
+| healthy | failures cheaper | 4.4x | true costs | 232,142 | 133,556 | **120,018** | 51,388 | 10.1% cheaper (+/- 4.2) | 82% of fleets |
+| healthy | failures cheaper | 4.4x | default costs (wrong) | 232,142 | 133,556 | **119,203** | 51,388 | 10.7% cheaper (+/- 8.0) | 57% of fleets |
+| healthy | failures much costlier | 27.2x | true costs | 1,439,616 | 212,232 | **289,294** | 79,888 | 36.3% dearer (+/- 21.0) | 33% of fleets |
+| healthy | failures much costlier | 27.2x | default costs (wrong) | 1,439,616 | 212,232 | **326,167** | 79,888 | 53.7% dearer (+/- 24.0) | 23% of fleets |
+| healthy | planned repairs costlier | 5.2x | true costs | 719,808 | 386,481 | **340,192** | 136,075 | 12.0% cheaper (+/- 4.7) | 90% of fleets |
+| healthy | planned repairs costlier | 5.2x | default costs (wrong) | 719,808 | 386,481 | **331,351** | 136,075 | 14.3% cheaper (+/- 8.5) | 62% of fleets |
+
+What this shows, without rounding in our favour:
+
+- **When repair capacity is scarce (30 machines, 1 technician per weekday, none at weekends, late parts), Tempo beats the tuned alarm in every cost setting:** 12% to 24% cheaper, cheaper in 75% to 90% of fleets, and almost unchanged when its cost assumptions are wrong. This is the situation Tempo is built for: when you cannot fix everything at once, choosing which machine goes first and when matters.
+- **When technicians are plentiful (standard, healthy), it depends on how costly a surprise failure is.** If a failure costs about 4 to 5 times a planned repair, Tempo is level with the alarm on standard fleets (1% to 5% cheaper, within the error bars) and clearly ahead on healthy fleets (10% to 14% cheaper). At our default (13.6 times) it is 16% dearer on standard fleets and level on healthy ones. At 27 times it is 28% to 54% dearer. When failures dominate the bill and there are enough technicians, "service nearly everything early" is hard to beat, and Tempo's remaining forecast errors cost more than its smarter scheduling gains.
+- **Wrong cost assumptions** barely matter on scarce fleets. They do hurt when real failure costs are much higher than Tempo assumes (standard and healthy fleets at 27 times: 9 to 17 percentage points worse).
+- **Against doing nothing, Tempo is 55% to 76% cheaper** at default costs (scarce 55%, healthy 72%, standard 76%).
+- The next improvement would be a risk-aversion setting that leans earlier when failures are very costly. It is not built.
+
+How Tempo improved (earlier run, different fleet counts): the first version lost to the alarm by 31% on standard fleets. Sampling the risky early-failure tail brought that to 17%, and range calibration to 14.5%. On scarce fleets those two fixes made no measurable difference.
+
+Caveats: this is a simulation, the cost numbers are assumptions, the scarce setting was added after the standard result as the case where scheduling should matter, and 40 fleets per row leaves wide error bars in several rows.
+
+## Does the rulebook catch the AI's mistakes?
+
+Reproduce with `python -m eval.llm_eval` (needs the Token Factory key; about 15 minutes per prompt; results in `eval/results/`). Six simulated fleets, 40 work orders, model DeepSeek-V4-Flash on AMD Token Factory. Every draft goes through the validator. Two prompts:
+
+| Prompt | Work orders | Valid as written | Valid after one repair try | Replaced by a safe template |
 |---|---|---|---|---|
-| Standard (20 machines, 2 technicians/weekday) | 1,113,397 | **236,350** | 270,556 | 159,280 |
-| Healthy (machines mostly far from failure) | 713,179 | 198,788 | 195,943 | 59,118 |
-| **Scarce (30 machines, 1 technician/weekday, none at weekends, late parts)** | 1,637,645 | 904,469 | **721,576** | 362,011 |
+| safety rules spelled out (how the app runs) | 40 | 100% | 100% | 0% |
+| safety rules hidden (stress test) | 40 | 0% | 92% | 8% |
 
-Tempo versus the tuned alarm:
+What this shows, and what it does not:
 
-- **Scarce resources: Tempo is 20% cheaper (+/- 4.6), and cheaper in 92% of fleets.** This is the case Tempo is designed for: when you cannot fix everything at once, choosing which machine goes first and when matters.
-- **Healthy fleets: a tie** (+1.4% +/- 8.2).
-- **Standard fleets: Tempo is 14.5% more expensive (+/- 7.6).** When technicians are plentiful and most machines are near failure, "service nearly everything immediately" is hard to beat, and the forecast's remaining errors cost Tempo more than smart scheduling gains.
-- Against doing nothing, Tempo is 56-76% cheaper in every case.
-
-How Tempo improved: the first version lost to the alarm by 31% on standard fleets. Sampling the risky early-failure tail brought that to 17%, and range calibration to 14.5%. On scarce fleets those two fixes made no measurable difference.
-
-Caveats: the scarce setting was added after the standard result, as the case where scheduling should matter, and it is still a simulation. The remaining gap to the oracle (about 270k vs 159k on standard fleets) is forecast error, which is where further improvement would come from.
+- **In normal use the model followed the checklist in all 40 orders.** That is a small test (6 fleets), not a guarantee, which is why the rulebook stays in charge anyway.
+- **With the rules left out of the prompt on purpose, the model forgot safety steps in every order** (most often the test before restart, then energy isolation, then lockout/tagout). The validator caught all of them. One repair try, in which the model is shown its earlier draft and the full checklist, fixed 92%; the other 8% became safe template orders. No order that broke the checklist reached the human.
+- This second row is a stress test of the safety net with a deliberately naive prompt. It is not how often the model breaks rules in normal use.
+- The checker is keyword matching: it proves the steps are mentioned, not that they are good, and it cannot tell whether an explanation's reasoning is true. A human still approves every plan.
+- Two bugs found while running this are fixed and covered by tests: the safety checker rejected valid wordings ("isolating", "functional test"), and the repair request did not show the model its previous draft, so repairs dropped other safety steps.
 
 ## Forecaster (before calibration), unseen machines
 

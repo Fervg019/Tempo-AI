@@ -1,0 +1,30 @@
+{
+ "model": "DeepSeek-V4-Flash",
+ "results": [
+  {
+   "rules_told_in_prompt": false,
+   "orders": 40,
+   "valid_first": 0,
+   "valid_repair": 37,
+   "template": 3,
+   "unverified": 0,
+   "calls": 43,
+   "api_errors": 1,
+   "problem_kinds": {
+    "missing test before restart": 37,
+    "missing energy isolation": 27,
+    "missing lockout/tagout": 13,
+    "malformed work order": 3
+   },
+   "still_wrong_after_repair": {
+    "missing test before restart": 3
+   },
+   "api_problems": [
+    "fleet 0: work-order call for machines [4, 5, 1]: HTTP 500: Error from provider self-dploy: 504 Gateway Timeout {\"error\":{\"type\":\"Gateway Timeout\",\"code\":\"call_upstream_timeout\",\"message\":\"error sending request for url (http://129.212.242.39:8888/v1/chat/completions). URL: http://129.212.242.39:8888/v1/chat/completions\"}}"
+   ],
+   "first_try_valid_rate": 0.0,
+   "valid_after_repair_rate": 0.925,
+   "template_rate": 0.075
+  }
+ ]
+}

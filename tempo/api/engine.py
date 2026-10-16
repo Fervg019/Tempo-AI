@@ -228,7 +228,9 @@ class ExplainService:
         if job:
             return dict(job, key=key)
         cached = self._load_disk(key)
-        if cached:
+        # Only trust saved text that was written for exactly this plan (same repair days). If the model or
+        # library versions ever produce a different plan, the saved text is ignored instead of shown.
+        if cached and cached.get("plan_sha256") == self.engine.compute(p).plan_hash():
             return {"status": "done", "key": key, "result": dict(cached, from_cache=True)}
         return {"status": "none", "key": key}
 

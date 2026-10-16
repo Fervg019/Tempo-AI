@@ -155,3 +155,14 @@ def test_number_check_accepts_real_numbers_and_flags_invented_ones():
     assert "987,654" in flagged
     assert len(rep.warnings) >= 1
     assert rep.ok          # unverified numbers are warnings: a human reviews them
+
+
+def test_safety_check_accepts_normal_wordings_and_still_rejects_missing_steps():
+    from tempo.validator.rules import SAFETY_CHECKLIST
+    text = ("Apply lock-out and tag-out. Isolating all energy sources and de-energising the drive. "
+            "Wear protective gear and gloves. Finish with a functional test before returning to service.")
+    for item, words in SAFETY_CHECKLIST.items():
+        assert any(w in text.lower() for w in words), item
+    bare = "Replace the bearing and tighten the bolts. Clean the area."
+    for item, words in SAFETY_CHECKLIST.items():
+        assert not any(w in bare.lower() for w in words), item

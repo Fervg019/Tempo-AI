@@ -44,7 +44,11 @@ ORDER_SYSTEM = (
     "You draft maintenance work orders. For each machine you are given, base the steps on the procedure text "
     "provided and do not add tools, parts or numbers that are not in it. Rules: service_day must equal the "
     "given service_day exactly; safety_steps must cover lockout/tagout, isolating all energy, and protective "
-    "equipment; steps must end with a function test before restart. Reply with ONLY a JSON object: "
+    "equipment; steps must end with a function test before restart. "
+    "If the input contains fix_these_problems, those are errors in your earlier drafts (shown in your_previous_drafts) "
+    "for the listed machine_ids: return a corrected, COMPLETE work order for each of them. Keep everything in the "
+    "earlier draft that was fine, fix every listed problem, make sure ALL of required_safety_checklist is covered "
+    "(in safety_steps or steps), and keep service_day exactly as given. Reply with ONLY a JSON object: "
     '{"work_orders": [{"machine_id": <id>, "service_day": <day>, "steps": ["..."], "safety_steps": ["..."]}]} '
     "with exactly one entry for EACH machine in the input, copying its machine_id and service_day from the input "
     "(<id> and <day> are placeholders, not real values)."
@@ -53,8 +57,11 @@ ORDER_SYSTEM = (
 # so the validator (not the prompt) is what catches a missing lockout/tagout.
 ORDER_SYSTEM_BARE = (
     "You draft maintenance work orders. For each machine you are given, base the steps on the procedure text "
-    "provided and do not add tools, parts or numbers that are not in it. service_day must equal the given "
-    "service_day exactly. Reply with ONLY a JSON object: "
+    "provided. service_day must equal the given service_day exactly. "
+    "If the input contains fix_these_problems, those are errors in your earlier drafts (shown in your_previous_drafts) "
+    "for the listed machine_ids: return a corrected, COMPLETE work order for each of them. Keep everything in the "
+    "earlier draft that was fine, fix every listed problem, make sure ALL of required_safety_checklist is covered "
+    "(in safety_steps or steps), and keep service_day exactly as given. Reply with ONLY a JSON object: "
     '{"work_orders": [{"machine_id": <id>, "service_day": <day>, "steps": ["..."], "safety_steps": ["..."]}]} '
     "with exactly one entry for EACH machine in the input, copying its machine_id and service_day from the input "
     "(<id> and <day> are placeholders, not real values)."
@@ -223,6 +230,8 @@ def explain_plan(llm, scenario: Scenario, plan, quantile_values: np.ndarray, lat
         payload = {"machines": entries}
         if problems:
             payload["fix_these_problems"] = {str(k): v for k, v in problems.items()}
+            payload["your_previous_drafts"] = {str(k): drafts.get(k, {}) for k in problems}
+            payload["required_safety_checklist"] = GENERAL_SAFETY
         try:
             reply = _ask(llm, ORDER_SYSTEM if tell_model_the_rules else ORDER_SYSTEM_BARE, payload, max_tokens=2500)
         except LLMError as e:

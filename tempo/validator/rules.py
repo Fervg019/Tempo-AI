@@ -31,10 +31,21 @@ WARNING = "warning"
 
 # Every work order must cover each item. A step counts if it contains any of the keywords.
 SAFETY_CHECKLIST: dict[str, tuple[str, ...]] = {
-    "lockout/tagout": ("lockout", "tagout", "lock out", "loto"),
-    "energy isolation": ("isolate", "de-energ", "deenerg", "zero energy", "disconnect power"),
-    "protective equipment": ("ppe", "protective equipment", "safety glasses", "gloves"),
-    "test before restart": ("test run", "function test", "restart check", "verify operation", "test before"),
+    "lockout/tagout": ("lockout", "lock-out", "lock out", "tagout", "tag-out", "tag out", "loto", "lock and tag"),
+    "energy isolation": ("isolat", "de-energ", "deenerg", "de energ", "zero energy", "zero-energy",
+                         "disconnect power", "disconnect the power", "power off", "disconnect from power"),
+    "protective equipment": ("ppe", "protective", "safety glasses", "safety goggles", "goggles", "gloves",
+                             "eye protection", "face shield"),
+    "test before restart": ("test run", "trial run", "function test", "functional test", "functionality test",
+                            "restart check", "verify operation", "verify correct operation", "test before",
+                            "test the machine", "test the equipment", "test operation", "operational test"),
+}
+# Shown to the model when it misses an item, so it knows which words the checker accepts.
+CHECKLIST_HINT = {
+    "lockout/tagout": "write 'lockout/tagout'",
+    "energy isolation": "write that all energy sources are isolated / de-energized",
+    "protective equipment": "name the protective equipment (PPE, safety glasses, gloves)",
+    "test before restart": "end with a 'function test' / test run before restart",
 }
 
 
@@ -223,7 +234,7 @@ def validate_work_order(order: dict, scenario: Scenario, service_day: Sequence[i
     text = " ".join(safety + steps).lower()
     for item, keywords in policy.safety_checklist.items():
         if not any(k in text for k in keywords):
-            _add(rep, "SAFETY", ERROR, f"machine {mid_int}: mandatory safety step missing: {item}", mid_int)
+            _add(rep, "SAFETY", ERROR, f"machine {mid_int}: mandatory safety step missing: {item} ({CHECKLIST_HINT.get(item, 'add it explicitly')})", mid_int)
     return rep
 
 

@@ -1,0 +1,506 @@
+[
+ {
+  "preset": "standard",
+  "cost_setting": "base",
+  "planner_assumed": "base",
+  "failure_to_planned_cost_ratio": 13.6,
+  "fleets": 40,
+  "alarm_threshold_days": 60,
+  "avg_cost": {
+   "run_to_failure": 1143672,
+   "alarm": 240355,
+   "tempo": 279439,
+   "oracle": 166483
+  },
+  "avg_failures": {
+   "run_to_failure": 15.68,
+   "alarm": 1.32,
+   "tempo": 2.5,
+   "oracle": 1.32
+  },
+  "tempo_vs_alarm_pct": -16.3,
+  "tempo_vs_alarm_pct_pm2se": 9.4,
+  "tempo_cheaper_share": 0.38,
+  "tempo_vs_run_to_failure_pct": 75.6
+ },
+ {
+  "preset": "standard",
+  "cost_setting": "cheap_failures",
+  "planner_assumed": "cheap_failures",
+  "failure_to_planned_cost_ratio": 4.4,
+  "fleets": 40,
+  "alarm_threshold_days": 45,
+  "avg_cost": {
+   "run_to_failure": 368182,
+   "alarm": 163678,
+   "tempo": 158596,
+   "oracle": 100115
+  },
+  "avg_failures": {
+   "run_to_failure": 15.68,
+   "alarm": 1.75,
+   "tempo": 3.58,
+   "oracle": 1.32
+  },
+  "tempo_vs_alarm_pct": 3.1,
+  "tempo_vs_alarm_pct_pm2se": 6.0,
+  "tempo_cheaper_share": 0.57,
+  "tempo_vs_run_to_failure_pct": 56.9
+ },
+ {
+  "preset": "standard",
+  "cost_setting": "cheap_failures",
+  "planner_assumed": "base",
+  "failure_to_planned_cost_ratio": 4.4,
+  "fleets": 40,
+  "alarm_threshold_days": 45,
+  "avg_cost": {
+   "run_to_failure": 368182,
+   "alarm": 163678,
+   "tempo": 156039,
+   "oracle": 100115
+  },
+  "avg_failures": {
+   "run_to_failure": 15.68,
+   "alarm": 1.75,
+   "tempo": 2.5,
+   "oracle": 1.32
+  },
+  "tempo_vs_alarm_pct": 4.7,
+  "tempo_vs_alarm_pct_pm2se": 3.9,
+  "tempo_cheaper_share": 0.72,
+  "tempo_vs_run_to_failure_pct": 57.6
+ },
+ {
+  "preset": "standard",
+  "cost_setting": "costly_failures",
+  "planner_assumed": "costly_failures",
+  "failure_to_planned_cost_ratio": 27.2,
+  "fleets": 40,
+  "alarm_threshold_days": 60,
+  "avg_cost": {
+   "run_to_failure": 2287344,
+   "alarm": 338195,
+   "tempo": 431836,
+   "oracle": 264323
+  },
+  "avg_failures": {
+   "run_to_failure": 15.68,
+   "alarm": 1.32,
+   "tempo": 2.17,
+   "oracle": 1.32
+  },
+  "tempo_vs_alarm_pct": -27.7,
+  "tempo_vs_alarm_pct_pm2se": 11.4,
+  "tempo_cheaper_share": 0.4,
+  "tempo_vs_run_to_failure_pct": 81.1
+ },
+ {
+  "preset": "standard",
+  "cost_setting": "costly_failures",
+  "planner_assumed": "base",
+  "failure_to_planned_cost_ratio": 27.2,
+  "fleets": 40,
+  "alarm_threshold_days": 60,
+  "avg_cost": {
+   "run_to_failure": 2287344,
+   "alarm": 338195,
+   "tempo": 461439,
+   "oracle": 264323
+  },
+  "avg_failures": {
+   "run_to_failure": 15.68,
+   "alarm": 1.32,
+   "tempo": 2.5,
+   "oracle": 1.32
+  },
+  "tempo_vs_alarm_pct": -36.4,
+  "tempo_vs_alarm_pct_pm2se": 13.5,
+  "tempo_cheaper_share": 0.33,
+  "tempo_vs_run_to_failure_pct": 79.8
+ },
+ {
+  "preset": "standard",
+  "cost_setting": "costly_planned_work",
+  "planner_assumed": "costly_planned_work",
+  "failure_to_planned_cost_ratio": 5.2,
+  "fleets": 40,
+  "alarm_threshold_days": 45,
+  "avg_cost": {
+   "run_to_failure": 1143672,
+   "alarm": 448897,
+   "tempo": 443282,
+   "oracle": 276104
+  },
+  "avg_failures": {
+   "run_to_failure": 15.68,
+   "alarm": 1.75,
+   "tempo": 3.3,
+   "oracle": 1.32
+  },
+  "tempo_vs_alarm_pct": 1.3,
+  "tempo_vs_alarm_pct_pm2se": 6.3,
+  "tempo_cheaper_share": 0.5,
+  "tempo_vs_run_to_failure_pct": 61.2
+ },
+ {
+  "preset": "standard",
+  "cost_setting": "costly_planned_work",
+  "planner_assumed": "base",
+  "failure_to_planned_cost_ratio": 5.2,
+  "fleets": 40,
+  "alarm_threshold_days": 45,
+  "avg_cost": {
+   "run_to_failure": 1143672,
+   "alarm": 448897,
+   "tempo": 436578,
+   "oracle": 276104
+  },
+  "avg_failures": {
+   "run_to_failure": 15.68,
+   "alarm": 1.75,
+   "tempo": 2.5,
+   "oracle": 1.32
+  },
+  "tempo_vs_alarm_pct": 2.7,
+  "tempo_vs_alarm_pct_pm2se": 4.4,
+  "tempo_cheaper_share": 0.62,
+  "tempo_vs_run_to_failure_pct": 61.8
+ },
+ {
+  "preset": "scarce",
+  "cost_setting": "base",
+  "planner_assumed": "base",
+  "failure_to_planned_cost_ratio": 13.6,
+  "fleets": 40,
+  "alarm_threshold_days": 45,
+  "avg_cost": {
+   "run_to_failure": 1644284,
+   "alarm": 940779,
+   "tempo": 739602,
+   "oracle": 372152
+  },
+  "avg_failures": {
+   "run_to_failure": 23.35,
+   "alarm": 12.28,
+   "tempo": 9.05,
+   "oracle": 4.45
+  },
+  "tempo_vs_alarm_pct": 21.4,
+  "tempo_vs_alarm_pct_pm2se": 5.9,
+  "tempo_cheaper_share": 0.88,
+  "tempo_vs_run_to_failure_pct": 55.0
+ },
+ {
+  "preset": "scarce",
+  "cost_setting": "cheap_failures",
+  "planner_assumed": "cheap_failures",
+  "failure_to_planned_cost_ratio": 4.4,
+  "fleets": 40,
+  "alarm_threshold_days": 30,
+  "avg_cost": {
+   "run_to_failure": 530645,
+   "alarm": 354863,
+   "tempo": 310834,
+   "oracle": 197100
+  },
+  "avg_failures": {
+   "run_to_failure": 23.35,
+   "alarm": 12.47,
+   "tempo": 9.82,
+   "oracle": 4.45
+  },
+  "tempo_vs_alarm_pct": 12.4,
+  "tempo_vs_alarm_pct_pm2se": 4.1,
+  "tempo_cheaper_share": 0.85,
+  "tempo_vs_run_to_failure_pct": 41.4
+ },
+ {
+  "preset": "scarce",
+  "cost_setting": "cheap_failures",
+  "planner_assumed": "base",
+  "failure_to_planned_cost_ratio": 4.4,
+  "fleets": 40,
+  "alarm_threshold_days": 30,
+  "avg_cost": {
+   "run_to_failure": 530645,
+   "alarm": 354863,
+   "tempo": 310702,
+   "oracle": 197100
+  },
+  "avg_failures": {
+   "run_to_failure": 23.35,
+   "alarm": 12.47,
+   "tempo": 9.05,
+   "oracle": 4.45
+  },
+  "tempo_vs_alarm_pct": 12.4,
+  "tempo_vs_alarm_pct_pm2se": 4.2,
+  "tempo_cheaper_share": 0.75,
+  "tempo_vs_run_to_failure_pct": 41.4
+ },
+ {
+  "preset": "scarce",
+  "cost_setting": "costly_failures",
+  "planner_assumed": "costly_failures",
+  "failure_to_planned_cost_ratio": 27.2,
+  "fleets": 40,
+  "alarm_threshold_days": 45,
+  "avg_cost": {
+   "run_to_failure": 3288568,
+   "alarm": 1805107,
+   "tempo": 1363991,
+   "oracle": 632392
+  },
+  "avg_failures": {
+   "run_to_failure": 23.35,
+   "alarm": 12.28,
+   "tempo": 8.93,
+   "oracle": 4.45
+  },
+  "tempo_vs_alarm_pct": 24.4,
+  "tempo_vs_alarm_pct_pm2se": 6.4,
+  "tempo_cheaper_share": 0.9,
+  "tempo_vs_run_to_failure_pct": 58.5
+ },
+ {
+  "preset": "scarce",
+  "cost_setting": "costly_failures",
+  "planner_assumed": "base",
+  "failure_to_planned_cost_ratio": 27.2,
+  "fleets": 40,
+  "alarm_threshold_days": 45,
+  "avg_cost": {
+   "run_to_failure": 3288568,
+   "alarm": 1805107,
+   "tempo": 1373002,
+   "oracle": 632392
+  },
+  "avg_failures": {
+   "run_to_failure": 23.35,
+   "alarm": 12.28,
+   "tempo": 9.05,
+   "oracle": 4.45
+  },
+  "tempo_vs_alarm_pct": 23.9,
+  "tempo_vs_alarm_pct_pm2se": 6.4,
+  "tempo_cheaper_share": 0.88,
+  "tempo_vs_run_to_failure_pct": 58.2
+ },
+ {
+  "preset": "scarce",
+  "cost_setting": "costly_planned_work",
+  "planner_assumed": "costly_planned_work",
+  "failure_to_planned_cost_ratio": 5.2,
+  "fleets": 40,
+  "alarm_threshold_days": 30,
+  "avg_cost": {
+   "run_to_failure": 1644284,
+   "alarm": 1064579,
+   "tempo": 917086,
+   "oracle": 552372
+  },
+  "avg_failures": {
+   "run_to_failure": 23.35,
+   "alarm": 12.47,
+   "tempo": 9.68,
+   "oracle": 4.45
+  },
+  "tempo_vs_alarm_pct": 13.9,
+  "tempo_vs_alarm_pct_pm2se": 4.4,
+  "tempo_cheaper_share": 0.82,
+  "tempo_vs_run_to_failure_pct": 44.2
+ },
+ {
+  "preset": "scarce",
+  "cost_setting": "costly_planned_work",
+  "planner_assumed": "base",
+  "failure_to_planned_cost_ratio": 5.2,
+  "fleets": 40,
+  "alarm_threshold_days": 30,
+  "avg_cost": {
+   "run_to_failure": 1644284,
+   "alarm": 1064579,
+   "tempo": 911165,
+   "oracle": 552372
+  },
+  "avg_failures": {
+   "run_to_failure": 23.35,
+   "alarm": 12.47,
+   "tempo": 9.05,
+   "oracle": 4.45
+  },
+  "tempo_vs_alarm_pct": 14.4,
+  "tempo_vs_alarm_pct_pm2se": 4.6,
+  "tempo_cheaper_share": 0.78,
+  "tempo_vs_run_to_failure_pct": 44.6
+ },
+ {
+  "preset": "healthy",
+  "cost_setting": "base",
+  "planner_assumed": "base",
+  "failure_to_planned_cost_ratio": 13.6,
+  "fleets": 40,
+  "alarm_threshold_days": 45,
+  "avg_cost": {
+   "run_to_failure": 719808,
+   "alarm": 201095,
+   "tempo": 202847,
+   "oracle": 62888
+  },
+  "avg_failures": {
+   "run_to_failure": 10.12,
+   "alarm": 1.18,
+   "tempo": 1.68,
+   "oracle": 0.25
+  },
+  "tempo_vs_alarm_pct": -0.9,
+  "tempo_vs_alarm_pct_pm2se": 10.8,
+  "tempo_cheaper_share": 0.6,
+  "tempo_vs_run_to_failure_pct": 71.8
+ },
+ {
+  "preset": "healthy",
+  "cost_setting": "cheap_failures",
+  "planner_assumed": "cheap_failures",
+  "failure_to_planned_cost_ratio": 4.4,
+  "fleets": 40,
+  "alarm_threshold_days": 30,
+  "avg_cost": {
+   "run_to_failure": 232142,
+   "alarm": 133556,
+   "tempo": 120018,
+   "oracle": 51388
+  },
+  "avg_failures": {
+   "run_to_failure": 10.12,
+   "alarm": 3.3,
+   "tempo": 3.08,
+   "oracle": 0.25
+  },
+  "tempo_vs_alarm_pct": 10.1,
+  "tempo_vs_alarm_pct_pm2se": 4.2,
+  "tempo_cheaper_share": 0.82,
+  "tempo_vs_run_to_failure_pct": 48.3
+ },
+ {
+  "preset": "healthy",
+  "cost_setting": "cheap_failures",
+  "planner_assumed": "base",
+  "failure_to_planned_cost_ratio": 4.4,
+  "fleets": 40,
+  "alarm_threshold_days": 30,
+  "avg_cost": {
+   "run_to_failure": 232142,
+   "alarm": 133556,
+   "tempo": 119203,
+   "oracle": 51388
+  },
+  "avg_failures": {
+   "run_to_failure": 10.12,
+   "alarm": 3.3,
+   "tempo": 1.68,
+   "oracle": 0.25
+  },
+  "tempo_vs_alarm_pct": 10.7,
+  "tempo_vs_alarm_pct_pm2se": 8.0,
+  "tempo_cheaper_share": 0.57,
+  "tempo_vs_run_to_failure_pct": 48.7
+ },
+ {
+  "preset": "healthy",
+  "cost_setting": "costly_failures",
+  "planner_assumed": "costly_failures",
+  "failure_to_planned_cost_ratio": 27.2,
+  "fleets": 40,
+  "alarm_threshold_days": 60,
+  "avg_cost": {
+   "run_to_failure": 1439616,
+   "alarm": 212232,
+   "tempo": 289294,
+   "oracle": 79888
+  },
+  "avg_failures": {
+   "run_to_failure": 10.12,
+   "alarm": 0.25,
+   "tempo": 1.2,
+   "oracle": 0.25
+  },
+  "tempo_vs_alarm_pct": -36.3,
+  "tempo_vs_alarm_pct_pm2se": 21.0,
+  "tempo_cheaper_share": 0.33,
+  "tempo_vs_run_to_failure_pct": 79.9
+ },
+ {
+  "preset": "healthy",
+  "cost_setting": "costly_failures",
+  "planner_assumed": "base",
+  "failure_to_planned_cost_ratio": 27.2,
+  "fleets": 40,
+  "alarm_threshold_days": 60,
+  "avg_cost": {
+   "run_to_failure": 1439616,
+   "alarm": 212232,
+   "tempo": 326167,
+   "oracle": 79888
+  },
+  "avg_failures": {
+   "run_to_failure": 10.12,
+   "alarm": 0.25,
+   "tempo": 1.68,
+   "oracle": 0.25
+  },
+  "tempo_vs_alarm_pct": -53.7,
+  "tempo_vs_alarm_pct_pm2se": 24.0,
+  "tempo_cheaper_share": 0.23,
+  "tempo_vs_run_to_failure_pct": 77.3
+ },
+ {
+  "preset": "healthy",
+  "cost_setting": "costly_planned_work",
+  "planner_assumed": "costly_planned_work",
+  "failure_to_planned_cost_ratio": 5.2,
+  "fleets": 40,
+  "alarm_threshold_days": 30,
+  "avg_cost": {
+   "run_to_failure": 719808,
+   "alarm": 386481,
+   "tempo": 340192,
+   "oracle": 136075
+  },
+  "avg_failures": {
+   "run_to_failure": 10.12,
+   "alarm": 3.3,
+   "tempo": 2.9,
+   "oracle": 0.25
+  },
+  "tempo_vs_alarm_pct": 12.0,
+  "tempo_vs_alarm_pct_pm2se": 4.7,
+  "tempo_cheaper_share": 0.9,
+  "tempo_vs_run_to_failure_pct": 52.7
+ },
+ {
+  "preset": "healthy",
+  "cost_setting": "costly_planned_work",
+  "planner_assumed": "base",
+  "failure_to_planned_cost_ratio": 5.2,
+  "fleets": 40,
+  "alarm_threshold_days": 30,
+  "avg_cost": {
+   "run_to_failure": 719808,
+   "alarm": 386481,
+   "tempo": 331351,
+   "oracle": 136075
+  },
+  "avg_failures": {
+   "run_to_failure": 10.12,
+   "alarm": 3.3,
+   "tempo": 1.68,
+   "oracle": 0.25
+  },
+  "tempo_vs_alarm_pct": 14.3,
+  "tempo_vs_alarm_pct_pm2se": 8.5,
+  "tempo_cheaper_share": 0.62,
+  "tempo_vs_run_to_failure_pct": 54.0
+ }
+]
