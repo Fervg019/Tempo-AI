@@ -10,4 +10,3 @@ models/
 *.sqlite
 .DS_Store
 .cache/
-.vscode/

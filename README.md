@@ -158,17 +158,17 @@ Caveats: this is a simulation, the cost numbers are assumptions, the scarce sett
 
 ## Does the rulebook catch the AI's mistakes?
 
-Reproduce with `python -m eval.llm_eval` (needs the Token Factory key; about 15 minutes per prompt; results in `eval/results/`). Six simulated fleets, 40 work orders, model DeepSeek-V4-Flash on AMD Token Factory. Every draft goes through the validator. Two prompts:
+Reproduce with `python -m eval.llm_eval` (needs the Token Factory key; about 50 minutes for both prompts because of the 20 requests-per-minute limit; results in `eval/results/llm_eval.md` and `.json`). Six simulated fleets, 40 work orders, model DeepSeek-V4-Flash on AMD Token Factory (the table is the latest full run; `eval/results/` also keeps an earlier hidden-rules-only run). Every draft goes through the validator. Two prompts:
 
 | Prompt | Work orders | Valid as written | Valid after one repair try | Replaced by a safe template |
 |---|---|---|---|---|
-| safety rules spelled out (how the app runs) | 40 | 100% | 100% | 0% |
-| safety rules hidden (stress test) | 40 | 0% | 92% | 8% |
+| safety rules spelled out (how the app runs) | 40 | 82% | 92% | 8% |
+| safety rules hidden (stress test) | 40 | 0% | 82% | 18% |
 
 What this shows, and what it does not:
 
-- **In normal use the model followed the checklist in all 40 orders.** That is a small test (6 fleets), not a guarantee, which is why the rulebook stays in charge anyway.
-- **With the rules left out of the prompt on purpose, the model forgot safety steps in every order** (most often the test before restart, then energy isolation, then lockout/tagout). The validator caught all of them. One repair try, in which the model is shown its earlier draft and the full checklist, fixed 92%; the other 8% became safe template orders. No order that broke the checklist reached the human.
+- **Results vary from run to run, so read these as ranges.** Across our runs with the rules in the prompt, 82% to 100% of orders were valid as written; the misses were malformed replies (a machine left out of a batch, a missing field) and two changed service days, not forgotten safety steps. With the rules hidden, one repair try fixed 82% to 92% in the two runs after the repair step was fixed.
+- **With the rules left out of the prompt on purpose, the model forgot safety steps in every order** (most often the test before restart, then energy isolation, then lockout/tagout). The validator caught all of them. The orders that one repair try could not fix became safe template orders. No order that broke the checklist reached the human.
 - This second row is a stress test of the safety net with a deliberately naive prompt. It is not how often the model breaks rules in normal use.
 - The checker is keyword matching: it proves the steps are mentioned, not that they are good, and it cannot tell whether an explanation's reasoning is true. A human still approves every plan.
 - Two bugs found while running this are fixed and covered by tests: the safety checker rejected valid wordings ("isolating", "functional test"), and the repair request did not show the model its previous draft, so repairs dropped other safety steps.
