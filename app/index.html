@@ -3,25 +3,26 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Tempo: when to fix each machine</title>
-<meta name="description" content="Tempo decides when to service each machine in a factory, explains the plan in plain words, and checks it against a rulebook before a person approves it.">
+<title>Tempo AI | Fix the right machine before it breaks</title>
+<meta name="description" content="Tempo AI predicts how many days each machine has left, plans the repairs around your technicians and spare parts, and explains the plan in plain words. A person always approves it.">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2302030a'/%3E%3Cpath d='M16 2 30 16 16 30 2 16Z' fill='none' stroke='%234f8f35' stroke-width='2'/%3E%3Cpath d='M6 16h5l2.5-6 4 12 2.5-6H26' fill='none' stroke='%23f3eee8' stroke-width='2'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Oswald:wght@400;500;600&family=Playfair+Display:ital,wght@0,600;0,700;1,500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Oswald:wght@400;500;600&family=Cinzel:wght@500;600;700&family=Cinzel+Decorative:wght@400;700&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg: #02030a;
+  --bg: #010a03;
   --bg-deep: #000000;
-  --surface: #070b16;
-  --surface-2: #0c1222;
+  --surface: #041208;
+  --surface-2: #071d0b;
   --edge: rgba(243, 238, 232, .10);
   --edge-strong: rgba(243, 238, 232, .24);
   --text: #f3eee8;
   --text-soft: #a3adc0;
   --text-faint: #7d889d;
-  --pink: #ff3d86;
-  --pink-light: #ff86b4;
-  --on-pink: #1a0010;
+  --pink: #4f8f35;
+  --pink-light: #8fc474;
+  --on-pink: #031a02;
   --cyan: #5cc8ff;
   --amber: #ffb020;
   --red: #ff4d4d;
@@ -30,14 +31,15 @@
   --lift: 0 24px 40px -28px rgba(0, 0, 0, .95);
   --ease: cubic-bezier(.22, .8, .24, 1);
   --spring: cubic-bezier(.34, 1.56, .64, 1);
-  --serif: "Playfair Display", Georgia, "Times New Roman", serif;
+  --serif: "Cinzel", Georgia, "Times New Roman", serif;
+  --deco: "Cinzel Decorative", "Cinzel", Georgia, serif;
   --sans: "Manrope", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --nums: "Oswald", "Arial Narrow", sans-serif;
   --gutter: clamp(16px, 4.5vw, 56px);
   --max: 1360px;
-  --sparkle: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Cpath d='M20 3c1.1 10 5.7 15.4 16.5 17-10.8 1.6-15.4 7-16.5 17C18.9 27 14.3 21.6 3.5 20 14.3 18.4 18.9 13 20 3z' fill='%23ff3d86'/%3E%3C/svg%3E");
+  --sparkle: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Cpath d='M20 3c1.1 10 5.7 15.4 16.5 17-10.8 1.6-15.4 7-16.5 17C18.9 27 14.3 21.6 3.5 20 14.3 18.4 18.9 13 20 3z' fill='%234f8f35'/%3E%3C/svg%3E");
   --sparkle-cyan: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Cpath d='M20 3c1.1 10 5.7 15.4 16.5 17-10.8 1.6-15.4 7-16.5 17C18.9 27 14.3 21.6 3.5 20 14.3 18.4 18.9 13 20 3z' fill='%235cc8ff'/%3E%3C/svg%3E");
-  --squiggle: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 12' preserveAspectRatio='none'%3E%3Cpath d='M2 8.5C12 3.5 19 10.5 30 6.5S47 3 58 7s17 2.5 28-1.5 19-2 32 1.5' fill='none' stroke='%23ff3d86' stroke-width='2.2' stroke-linecap='round' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E");
+  --squiggle: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 12' preserveAspectRatio='none'%3E%3Cpath d='M2 8.5C12 3.5 19 10.5 30 6.5S47 3 58 7s17 2.5 28-1.5 19-2 32 1.5' fill='none' stroke='%234f8f35' stroke-width='2.2' stroke-linecap='round' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E");
   --label-w: 148px;
   --cw: 34px;
   --notech: repeating-linear-gradient(135deg, rgba(243,238,232,.10) 0 2px, transparent 2px 7px);
@@ -55,7 +57,7 @@ a, button, select, input { -webkit-tap-highlight-color: transparent; touch-actio
 /* night sky, faint glows, film grain */
 body::before { content: ""; position: fixed; inset: 0; z-index: -3; pointer-events: none;
   background: radial-gradient(ellipse 70% 45% at 50% -8%, rgba(24, 52, 120, .42), transparent 70%),
-              radial-gradient(ellipse 40% 30% at 92% 4%, rgba(255, 61, 134, .08), transparent 70%); }
+              radial-gradient(ellipse 40% 30% at 92% 4%, rgba(79, 143, 53, .08), transparent 70%); }
 body::after { content: ""; position: fixed; inset: 0; z-index: 100; pointer-events: none; opacity: .06;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .6 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E"); }
 
@@ -68,15 +70,15 @@ body::after { content: ""; position: fixed; inset: 0; z-index: 100; pointer-even
 @keyframes ambient-drift { 0%, 100% { transform: translate(0, 0) rotate(0); } 33% { transform: translate(36px, -28px) rotate(8deg); } 66% { transform: translate(-24px, 30px) rotate(-6deg); } }
 @keyframes ambient-drift-alt { 0%, 100% { transform: translate(0, 0) rotate(0); } 50% { transform: translate(-42px, -34px) rotate(-12deg); } }
 .cursor-glow { position: fixed; left: 0; top: 0; z-index: -1; width: 620px; height: 620px; margin: -310px 0 0 -310px; border-radius: 50%; pointer-events: none; opacity: 0; transition: opacity .6s ease; will-change: transform;
-  background: radial-gradient(circle, rgba(92, 200, 255, .09) 0%, rgba(255, 61, 134, .04) 40%, transparent 70%); }
+  background: radial-gradient(circle, rgba(92, 200, 255, .09) 0%, rgba(79, 143, 53, .04) 40%, transparent 70%); }
 .cursor-glow.on { opacity: 1; }
 .touch-bloom { position: fixed; left: 0; top: 0; z-index: -1; width: 340px; height: 340px; margin: -170px 0 0 -170px; border-radius: 50%; pointer-events: none; opacity: 0;
-  background: radial-gradient(circle, rgba(92, 200, 255, .16) 0%, rgba(255, 61, 134, .06) 40%, transparent 70%); }
+  background: radial-gradient(circle, rgba(92, 200, 255, .16) 0%, rgba(79, 143, 53, .06) 40%, transparent 70%); }
 .touch-bloom.on { animation: bloom 1.2s var(--ease) both; }
 @keyframes bloom { 0% { opacity: 0; transform: scale(.45); } 22% { opacity: 1; } 100% { opacity: 0; transform: scale(1.15); } }
 
-h1, h2, h3 { font-family: var(--serif); font-weight: 600; letter-spacing: -.01em; margin: 0; line-height: 1.1; text-wrap: balance; }
-h1 em, h2 em { font-style: italic; font-weight: 500; color: var(--pink); padding-bottom: .06em; background: var(--squiggle) no-repeat 0 100% / 0% .2em; transition: background-size .7s var(--ease); }
+h1, h2, h3 { font-family: var(--serif); font-weight: 600; letter-spacing: .02em; margin: 0; line-height: 1.1; text-wrap: balance; }
+h1 em, h2 em { font-style: normal; font-weight: 700; color: var(--pink); padding-bottom: .06em; background: var(--squiggle) no-repeat 0 100% / 0% .2em; transition: background-size .7s var(--ease); }
 .card:hover h2 em, h2.in-view em, h1.in-view em { background-size: 100% .2em; }
 .wrap { max-width: var(--max); margin: 0 auto; padding: 0 var(--gutter) 56px; }
 
@@ -86,14 +88,14 @@ h1 em, h2 em { font-style: italic; font-weight: 500; color: var(--pink); padding
 .site-head-inner { max-width: var(--max); margin: 0 auto; padding: 16px var(--gutter); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 24px; transition: padding .4s var(--ease); }
 .site-head.scrolled .site-head-inner { padding-top: 9px; padding-bottom: 9px; }
 .scroll-line { position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; background: var(--pink); transform: scaleX(var(--progress, 0)); transform-origin: left; pointer-events: none; }
-.logo { display: inline-flex; align-items: baseline; font: 700 1.9rem/1 var(--serif); letter-spacing: -.01em; color: var(--text); text-decoration: none; padding: 6px 0; cursor: default; }
+.logo { display: inline-flex; align-items: baseline; font: 700 1.7rem/1 var(--deco); letter-spacing: .02em; color: var(--text); text-decoration: none; padding: 6px 0; cursor: default; }
 .logo .lt { display: inline-block; transition: color .3s ease; }
 .logo .ld { width: 7px; height: 7px; margin-left: 3px; background: var(--pink); display: inline-block; transform: rotate(45deg); }
 .logo.wave .lt { animation: letter-hop .6s var(--ease) both; animation-delay: calc(var(--i) * 55ms); }
 .logo.wave .ld { animation: dot-hop .8s ease-out .2s both; }
 @keyframes letter-hop { 0%, 100% { transform: none; } 35% { transform: translateY(-16%) rotate(-6deg); } 70% { transform: translateY(3%); } }
 @keyframes dot-hop { 0%, 100% { transform: rotate(45deg); } 30% { transform: translateY(-140%) rotate(45deg) scale(.85, 1.15); } 55% { transform: translateY(0) rotate(45deg) scale(1.3, .75); } 86% { transform: rotate(45deg) scale(1.08, .94); } }
-.ai-state { display: inline-flex; align-items: center; gap: 10px; font: 600 .85rem/1.2 var(--sans); letter-spacing: .02em; color: var(--text-soft); border: 1px solid var(--edge-strong); border-radius: var(--r-sm); padding: 8px 12px; background: rgba(12, 18, 34, .6); }
+.ai-state { display: inline-flex; align-items: center; gap: 10px; font: 600 .85rem/1.2 var(--sans); letter-spacing: .02em; color: var(--text-soft); border: 1px solid var(--edge-strong); border-radius: var(--r-sm); padding: 8px 12px; background: rgba(5, 40, 8, .55); }
 .dot { width: 8px; height: 8px; background: var(--text-faint); display: inline-block; position: relative; }
 .dot.on { background: var(--green); }
 .dot.on::after { content: ""; position: absolute; inset: -4px; border: 1px solid var(--green); opacity: 0; animation: ping 2.4s ease-out infinite; }
@@ -107,7 +109,7 @@ h1 em, h2 em { font-style: italic; font-weight: 500; color: var(--pink); padding
 
 /* hero */
 .hero { padding: clamp(36px, 5vw, 64px) 0 clamp(18px, 3vw, 30px); }
-.headline { font: 600 clamp(1.9rem, 4.4vw, 3.6rem)/1.06 var(--serif); letter-spacing: -.02em; margin: 0 0 14px; max-width: 22em; text-wrap: balance; }
+.headline { font: 600 clamp(1.6rem, 3.6vw, 3rem)/1.12 var(--serif); letter-spacing: .02em; margin: 0 0 14px; max-width: 22em; text-wrap: balance; }
 .headline .save { font-style: italic; font-weight: 500; color: var(--pink); background: var(--squiggle) no-repeat 0 100% / 100% .12em; padding-bottom: .06em; animation: draw-in .9s var(--ease) .2s both; }
 @keyframes draw-in { from { background-size: 0% .12em; opacity: .4; } to { background-size: 100% .12em; opacity: 1; } }
 .subline { color: var(--text-soft); margin: 0; max-width: 60ch; min-height: 1.6em; font-size: 1.08rem; }
@@ -137,7 +139,7 @@ h1 em, h2 em { font-style: italic; font-weight: 500; color: var(--pink); padding
 .field label { display: flex; justify-content: space-between; font-weight: 600; font-size: .92rem; color: var(--text); }
 .field output { font: 500 1.05rem/1.2 var(--nums); color: var(--pink-light); letter-spacing: .02em; }
 
-.fieldrow input, .fieldrow textarea { width: 100%; min-height: 40px; border: 1px solid var(--edge-strong); border-radius: var(--r-sm); background: #03050c; padding: 8px 10px; transition: border-color .25s ease; }
+.fieldrow input, .fieldrow textarea { width: 100%; min-height: 40px; border: 1px solid var(--edge-strong); border-radius: var(--r-sm); background: #020c04; padding: 8px 10px; transition: border-color .25s ease; }
 .fieldrow input:hover, .fieldrow textarea:hover { border-color: rgba(243, 238, 232, .4); }
 .fieldrow { display: grid; gap: 4px; margin: 10px 0; }
 .fieldrow label { font-weight: 600; font-size: .9rem; color: var(--text-soft); }
@@ -175,12 +177,12 @@ h1 em, h2 em { font-style: italic; font-weight: 500; color: var(--pink); padding
 .row.head, .row.techs { min-height: 32px; }
 .row.head { border-bottom: 1px solid var(--edge-strong); }
 .row.machine { cursor: pointer; transition: background-color .25s ease; }
-.row.machine:hover { background: rgba(255, 61, 134, .06); }
-.row.machine[aria-selected="true"] { background: rgba(255, 61, 134, .12); box-shadow: inset 2px 0 0 var(--pink); }
+.row.machine:hover { background: rgba(79, 143, 53, .06); }
+.row.machine[aria-selected="true"] { background: rgba(79, 143, 53, .12); box-shadow: inset 2px 0 0 var(--pink); }
 .row.machine:focus-visible { outline-offset: -3px; }
 .lab { position: sticky; left: 0; z-index: 3; background: var(--surface); padding: 2px 10px 2px 8px; font-weight: 700; line-height: 1.15; height: 100%; display: flex; flex-direction: column; justify-content: center; transition: background-color .25s ease; }
-.row.machine:hover .lab { background: #140b19; }
-.row.machine[aria-selected="true"] .lab { background: #1b0c1d; }
+.row.machine:hover .lab { background: #0b2c09; }
+.row.machine[aria-selected="true"] .lab { background: #0f3a0c; }
 .lab small { font-weight: 500; color: var(--text-soft); font-size: .78rem; }
 .cells { position: relative; height: 100%; min-height: 32px; display: grid; grid-template-columns: repeat(var(--days), minmax(0, 1fr)); }
 .cells > span { text-align: center; font: 500 .8rem/1.1 var(--nums); letter-spacing: .02em; color: var(--text-soft); align-self: center; }
@@ -270,16 +272,16 @@ footer { margin-top: 30px; padding-top: 18px; border-top: 1px solid var(--edge);
 
 /* custom dropdown (the browser's own list is blue) */
 .select { position: relative; }
-.select-btn { width: 100%; min-height: 44px; display: flex; align-items: center; justify-content: space-between; gap: 10px; text-align: left; background: #03050c; border: 1px solid var(--edge-strong); border-radius: var(--r-sm); padding: 8px 14px; cursor: pointer; font-weight: 600; transition: border-color .25s ease, box-shadow .25s ease, transform .25s var(--ease); }
+.select-btn { width: 100%; min-height: 44px; display: flex; align-items: center; justify-content: space-between; gap: 10px; text-align: left; background: #020c04; border: 1px solid var(--edge-strong); border-radius: var(--r-sm); padding: 8px 14px; cursor: pointer; font-weight: 600; transition: border-color .25s ease, box-shadow .25s ease, transform .25s var(--ease); }
 .select-btn:hover { border-color: var(--pink); transform: translateY(-1px); }
-.select[data-open="true"] .select-btn { border-color: var(--pink); box-shadow: 0 0 0 3px rgba(255, 61, 134, .18); }
+.select[data-open="true"] .select-btn { border-color: var(--pink); box-shadow: 0 0 0 3px rgba(79, 143, 53, .18); }
 .chev { flex: none; width: 9px; height: 9px; border-right: 2px solid var(--pink); border-bottom: 2px solid var(--pink); transform: rotate(45deg) translateY(-2px); transition: transform .35s var(--spring); }
 .select[data-open="true"] .chev { transform: rotate(225deg) translate(-2px, 0); }
-.select-list { position: absolute; left: 0; right: 0; top: calc(100% + 6px); z-index: 30; margin: 0; padding: 6px; list-style: none; background: #060a14; border: 1px solid var(--edge-strong); border-radius: var(--r-sm); box-shadow: 0 24px 40px -18px #000; transform-origin: top; animation: pop-open .28s var(--ease); }
+.select-list { position: absolute; left: 0; right: 0; top: calc(100% + 6px); z-index: 30; margin: 0; padding: 6px; list-style: none; background: #04120a; border: 1px solid var(--edge-strong); border-radius: var(--r-sm); box-shadow: 0 24px 40px -18px #000; transform-origin: top; animation: pop-open .28s var(--ease); }
 .select-list[hidden] { display: none; }
 @keyframes pop-open { from { opacity: 0; transform: translateY(-8px) scaleY(.92); } to { opacity: 1; transform: none; } }
 .select-list li { position: relative; overflow: hidden; display: flex; justify-content: space-between; align-items: center; padding: 11px 12px; cursor: pointer; border-radius: var(--r-sm); outline: none; transition: background-color .2s ease, padding-left .25s var(--ease), color .2s ease; }
-.select-list li:hover, .select-list li:focus { background: rgba(255, 61, 134, .14); padding-left: 20px; color: var(--pink-light); }
+.select-list li:hover, .select-list li:focus { background: rgba(79, 143, 53, .14); padding-left: 20px; color: var(--pink-light); }
 .select-list li[aria-selected="true"]::after { content: ""; width: 8px; height: 8px; background: var(--pink); transform: rotate(45deg); }
 .select-list li[aria-selected="true"] { font-weight: 700; }
 
@@ -298,7 +300,7 @@ footer { margin-top: 30px; padding-top: 18px; border-top: 1px solid var(--edge);
 
 /* header tools and motion switch */
 .head-tools { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
-.motion-btn { display: inline-flex; align-items: center; gap: 9px; border: 1px solid var(--edge-strong); background: rgba(12, 18, 34, .6); color: var(--text-soft); padding: 8px 12px; border-radius: var(--r-sm); cursor: pointer; font: 600 .82rem/1.2 var(--sans); letter-spacing: .03em; transition: border-color .25s ease, color .25s ease, transform .25s var(--ease); }
+.motion-btn { display: inline-flex; align-items: center; gap: 9px; border: 1px solid var(--edge-strong); background: rgba(5, 40, 8, .55); color: var(--text-soft); padding: 8px 12px; border-radius: var(--r-sm); cursor: pointer; font: 600 .82rem/1.2 var(--sans); letter-spacing: .03em; transition: border-color .25s ease, color .25s ease, transform .25s var(--ease); }
 .motion-btn i { width: 8px; height: 8px; background: var(--pink); transform: rotate(45deg); transition: transform .5s var(--spring), background-color .25s ease; }
 .motion-btn[aria-pressed="false"] i { background: var(--text-faint); }
 .motion-btn:hover { border-color: var(--pink); color: var(--text); transform: translateY(-1px); }
@@ -309,7 +311,7 @@ footer { margin-top: 30px; padding-top: 18px; border-top: 1px solid var(--edge);
 /* click and cursor effects built by the script */
 .btn, .chip, .select-btn, .select-list li, .motion-btn { position: relative; overflow: hidden; }
 .ripple { position: absolute; border-radius: 50%; pointer-events: none; width: 12px; height: 12px; margin: -6px 0 0 -6px; background: rgba(255, 255, 255, .5); animation: ripple .65s var(--ease) forwards; }
-.btn.alt .ripple, .btn.bad .ripple, .chip .ripple, .select-btn .ripple, .select-list li .ripple, .motion-btn .ripple { background: rgba(255, 61, 134, .55); }
+.btn.alt .ripple, .btn.bad .ripple, .chip .ripple, .select-btn .ripple, .select-list li .ripple, .motion-btn .ripple { background: rgba(79, 143, 53, .55); }
 @keyframes ripple { to { transform: scale(22); opacity: 0; } }
 .burst { position: fixed; z-index: 200; width: 12px; height: 12px; margin: -6px 0 0 -6px; pointer-events: none; background: var(--sparkle) center/contain no-repeat; animation: burst .8s var(--ease) forwards; }
 .burst.c { background-image: var(--sparkle-cyan); }
@@ -330,10 +332,10 @@ h2 em:hover { transform: translateY(-3px) rotate(-1.2deg); color: var(--pink-lig
 @keyframes redraw-save { from { background-size: 0% .12em; } to { background-size: 100% .12em; } }
 .headline { cursor: default; }
 .tile { transition: transform .35s var(--spring), border-color .3s ease, box-shadow .3s ease; }
-.tile:hover { transform: translateY(-4px); box-shadow: 0 18px 30px -22px rgba(255, 61, 134, .5); }
+.tile:hover { transform: translateY(-4px); box-shadow: 0 18px 30px -22px rgba(79, 143, 53, .5); }
 .tile .n { display: inline-block; transform-origin: left; transition: transform .35s var(--spring), color .3s ease; }
 .tile:hover .n { transform: scale(1.05); }
-.card:hover { border-color: rgba(255, 61, 134, .28); }
+.card:hover { border-color: rgba(79, 143, 53, .28); }
 .chip:hover { transform: translateY(-2px); }
 .btn:hover:not(:disabled) { transform: translateY(-2px); }
 .btn:active:not(:disabled), .chip:active { transform: scale(.96); }
@@ -355,17 +357,79 @@ details > summary:hover { color: var(--pink-light); padding-left: 4px; }
 .legend span:hover { color: var(--text); transform: translateX(3px); }
 .lab, .field label { transition: color .25s ease; }
 .field:hover label { color: var(--pink-light); }
-.fieldrow input:focus, .fieldrow textarea:focus { border-color: var(--pink); box-shadow: 0 0 0 3px rgba(255, 61, 134, .18); outline: none; }
+.fieldrow input:focus, .fieldrow textarea:focus { border-color: var(--pink); box-shadow: 0 0 0 3px rgba(79, 143, 53, .18); outline: none; }
 .note, .audit-row { animation: note-in .45s var(--ease) backwards; }
 @keyframes note-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+/* ======== v22: introduction, logo, calmer controls, clearer colours, effects above the boxes ======== */
+html { scroll-behavior: smooth; }
+#demo, #how, #top { scroll-margin-top: 90px; }
+a.btn { text-decoration: none; }
+.logo { align-items: center; gap: 0; }
+.logo-mark { width: 30px; height: 30px; flex: none; overflow: visible; margin-right: 10px; }
+.lm-d { fill: none; stroke: var(--pink); stroke-width: 2; stroke-linejoin: miter; transition: transform .6s var(--spring); transform-origin: 16px 16px; }
+.lm-p { fill: none; stroke: var(--text); stroke-width: 2; stroke-dasharray: 60; stroke-dashoffset: 0; animation: lm-draw 1.4s var(--ease) .1s backwards; }
+@keyframes lm-draw { from { stroke-dashoffset: 60; } to { stroke-dashoffset: 0; } }
+.logo:hover .lm-d { transform: rotate(90deg) scale(1.08); }
+.logo:hover .lm-p { animation: lm-draw .9s var(--ease); }
+
+/* introduction */
+.intro { padding: clamp(44px, 8vw, 104px) 0 clamp(20px, 3vw, 36px); max-width: 980px; }
+.intro h1 { font-family: var(--deco); font-weight: 700; font-size: clamp(2.1rem, 5vw, 4.3rem); line-height: 1.1; letter-spacing: .01em; margin: 0 0 22px; max-width: 14em; }
+.intro h1 em { display: inline-block; transition: transform .35s var(--spring), color .3s ease; cursor: default; }
+.intro h1 em:hover { transform: translateY(-3px) rotate(-1.2deg); color: var(--pink-light); animation: redraw-h1 .8s var(--ease) both; }
+@keyframes redraw-h1 { from { background-size: 0% .2em; } to { background-size: 100% .2em; } }
+.lede { font-size: clamp(1.05rem, 1.5vw, 1.3rem); line-height: 1.65; color: var(--text-soft); max-width: 46em; margin: 0 0 28px; }
+.intro-cta { display: flex; flex-wrap: wrap; gap: 12px; }
+.intro-note { margin: 18px 0 0; font-size: .86rem; color: var(--text-faint); max-width: 60ch; }
+.how { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin: clamp(12px, 2vw, 24px) 0 clamp(36px, 6vw, 72px); }
+@media (max-width: 860px) { .how { grid-template-columns: minmax(0, 1fr); } }
+.how .card + .card { margin-top: 0; }
+.how-card { padding: 22px; }
+.how-card .step { display: block; margin-bottom: 10px; }
+.how-card h3 { margin: 0 0 8px; font-size: 1.35rem; }
+.how-card p { margin: 0; color: var(--text-soft); }
+.intro > .label { margin-bottom: 18px; }
+.hero { padding-top: clamp(8px, 2vw, 20px); }
+.hero .label { max-width: 70ch; line-height: 1.5; letter-spacing: .1em; }
+
+/* controls: three even columns, the "new fleet" button sits with the examples */
+.preset-row { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 12px 24px; }
+.fleet-new { text-align: right; }
+.fleet-new .btn-hint { margin: 6px 0 0 auto; }
+@media (max-width: 700px) { .fleet-new { text-align: left; } .fleet-new .btn-hint { margin-left: 0; } }
+.sliders { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px 32px; }
+@media (max-width: 900px) { .sliders { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .sliders { grid-template-columns: minmax(0, 1fr); } }
+.field { display: flex; flex-direction: column; }
+.field .hint { margin-top: 6px; }
+
+/* "no technicians" is now violet so it cannot be mistaken for the failure range (blue) */
+:root { --notech: repeating-linear-gradient(135deg, rgba(176, 140, 255, .55) 0 2px, rgba(176, 140, 255, .12) 2px 7px); --violet: #b08cff; }
+.lg-no { border-color: rgba(176, 140, 255, .8); }
+.cells > span.zero { color: var(--violet); }
+.band { background: rgba(92, 200, 255, .30); border: 1px solid rgba(92, 200, 255, .9); }
+.band.cut { background: linear-gradient(90deg, rgba(92, 200, 255, .30) 70%, transparent); }
+.lg-band { background: rgba(92, 200, 255, .30); border-color: rgba(92, 200, 255, .9); }
+.row.machine:hover .band { background-color: rgba(92, 200, 255, .42); }
+
+/* the cursor effects now sit above the boxes (subtle), and the boxes let the background show through */
+.dots { z-index: 40; }
+.cursor-glow { z-index: 41; mix-blend-mode: screen; width: 640px; height: 640px; margin: -320px 0 0 -320px;
+  background: radial-gradient(circle, rgba(79, 143, 53, .18) 0%, rgba(92, 200, 255, .08) 38%, transparent 70%); }
+.touch-bloom { z-index: 41; mix-blend-mode: screen; }
+.trail { z-index: 42; }
+.ambient-item { opacity: .2; }
+.ambient-item.pink { opacity: .24; }
+.card, .tile { background: rgba(4, 18, 8, .82); }
+.lab { background: rgba(4, 18, 8, .94); }
 </style>
 </head>
 <body>
 <header class="site-head" id="siteHead">
   <div class="site-head-inner">
-    <a class="logo wave" id="logo" href="#" aria-label="Tempo"><span class="lt" style="--i:0">T</span><span class="lt" style="--i:1">e</span><span class="lt" style="--i:2">m</span><span class="lt" style="--i:3">p</span><span class="lt" style="--i:4">o</span><span class="ld" aria-hidden="true"></span></a>
+    <a class="logo wave" id="logo" href="#" aria-label="Tempo AI, back to the top"><svg class="logo-mark" viewBox="0 0 32 32" aria-hidden="true"><path class="lm-d" d="M16 2 30 16 16 30 2 16Z"/><path class="lm-p" d="M6 16h5l2.5-6 4 12 2.5-6H26"/></svg><span class="lt" style="--i:0">T</span><span class="lt" style="--i:1">e</span><span class="lt" style="--i:2">m</span><span class="lt" style="--i:3">p</span><span class="lt" style="--i:4">o</span><span class="ld" aria-hidden="true"></span></a>
     <div class="head-tools">
-      <button class="motion-btn" id="motionBtn" type="button" aria-pressed="true" title="Turn the animations on or off"><i></i><span>Motion on</span></button>
       <div class="ai-state" id="aiState" aria-live="polite"><span class="dot"></span><span>Checking server</span></div>
     </div>
   </div>
@@ -373,9 +437,29 @@ details > summary:hover { color: var(--pink-light); padding-left: 4px; }
 </header>
 <div class="wrap">
 
-<section class="hero">
-  <p class="label">Decides when to fix each machine, then a person approves</p>
-  <h1 class="headline" id="headline">Loading the fleet</h1>
+<section class="intro" id="top">
+  <p class="label">Maintenance planning for factories</p>
+  <h1>Fix the right machine, <em>before it breaks.</em></h1>
+  <p class="lede">Factories lose money when a machine breaks without warning. Tempo AI watches each machine's sensors, predicts how many days it has left, and plans the repairs around your technicians and spare parts. An AI explains the plan in plain words, and a person always makes the final call.</p>
+  <div class="intro-cta">
+    <a class="btn" href="#demo">Try the demo</a>
+    <a class="btn alt" href="#how">See how it works</a>
+  </div>
+  <p class="intro-note">The demo runs on a simulated factory. The AI part runs on AMD GPUs through AMD Token Factory.</p>
+</section>
+
+<section class="how" id="how" aria-label="How Tempo works">
+  <article class="card how-card"><span class="step">01</span><h3>Forecast</h3>
+    <p>Reads each machine's sensors and predicts how many days it has left, as a range instead of a single guess, so you can see how sure it is.</p></article>
+  <article class="card how-card"><span class="step">02</span><h3>Plan</h3>
+    <p>Tries thousands of possible futures and picks the cheapest repair day for every machine, given the technicians and spare parts you really have.</p></article>
+  <article class="card how-card"><span class="step">03</span><h3>Check and approve</h3>
+    <p>An AI explains the plan and writes the work orders. A rulebook checks them for safety and wrong numbers. Then you approve or reject.</p></article>
+</section>
+
+<section class="hero" id="demo">
+  <p class="label">Live demo: a simulated factory. Change the situation and watch the plan and cost update</p>
+  <h2 class="headline" id="headline">Loading the fleet</h2>
   <p class="subline" id="subline"></p>
 </section>
 
@@ -391,7 +475,11 @@ details > summary:hover { color: var(--pink-light); padding-left: 4px; }
     <h2>Set the <em>situation</em></h2>
     <p class="sec-sub">Describe the factory. Pick a quick example or move the sliders, and the plan below recomputes by itself.</p>
   </div></div>
-  <div class="presets" id="presets" role="group" aria-label="Quick examples"><span class="lead">Quick examples</span></div>
+  <div class="preset-row">
+    <div class="presets" id="presets" role="group" aria-label="Quick examples"><span class="lead">Quick examples</span></div>
+    <div class="fleet-new"><button class="btn alt" id="newFleet" type="button" title="Creates new random machines with the same settings">Try a different fleet</button>
+      <p class="btn-hint">New random machines, same settings.</p></div>
+  </div>
   <div class="sliders">
     <div class="field"><label for="tech_weekday">Technicians on weekdays <output id="o_tech_weekday"></output></label>
       <input id="tech_weekday" type="range" min="0" max="4" step="1"><p class="hint">People who can repair machines, Monday to Friday.</p></div>
@@ -413,8 +501,7 @@ details > summary:hover { color: var(--pink-light); padding-left: 4px; }
         <select id="fleet" class="sr-only" tabindex="-1" aria-hidden="true"><option value="stressed">Many near failure</option><option value="healthy">Mostly healthy</option></select>
       </div>
       <p class="hint">How worn the machines are today.</p>
-      <div class="btnrow" style="margin-top:8px"><button class="btn alt" id="newFleet" type="button">Try a different fleet</button></div>
-      <p class="btn-hint">Creates new random machines with the same settings.</p></div>
+</div>
   </div>
 </section>
 
@@ -892,19 +979,6 @@ function syncSelect() {
    click ripples and bursts, magnetic buttons, scroll line, reveal ----------
    Motion is ON by default. The Motion button in the header turns it off and remembers the choice. */
 function startMotion() {
-  const root = document.documentElement;
-  let saved = null;
-  try { saved = localStorage.getItem("tempo_motion"); } catch (e) { /* ignore */ }
-  if (saved === "off") root.classList.add("still");
-  const mbtn = $("motionBtn");
-  const showMotion = () => { const on = motionOn(); mbtn.setAttribute("aria-pressed", String(on)); mbtn.lastChild.textContent = on ? "Motion on" : "Motion off"; };
-  showMotion();
-  mbtn.addEventListener("click", () => {
-    root.classList.toggle("still");
-    try { localStorage.setItem("tempo_motion", motionOn() ? "on" : "off"); } catch (e) { /* ignore */ }
-    showMotion(); if (motionOn()) drawDots();
-  });
-
   const SPARK = '<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 3c1.1 10 5.7 15.4 16.5 17-10.8 1.6-15.4 7-16.5 17C18.9 27 14.3 21.6 3.5 20 14.3 18.4 18.9 13 20 3z" fill="currentColor"/></svg>';
   const amb = h("div", { class: "ambient", "aria-hidden": "true" });
   const spots = [[2, 36, 70, .5], [88, 10, 50, 1.2], [74, 38, 90, .8], [12, 62, 44, 1.5], [50, 76, 110, .6], [92, 82, 56, 1.1], [28, 90, 64, 1.3], [60, 24, 36, 1.8]];
@@ -931,7 +1005,7 @@ function startMotion() {
         const dx = x - mx, dy = y - my, d = Math.hypot(dx, dy);
         const t = d < RAD ? 1 - d / RAD : 0;
         const ox = t ? (dx / d) * t * 9 : 0, oy = t ? (dy / d) * t * 9 : 0;
-        ctx.fillStyle = `rgba(${243 + 12 * t}, ${238 - 177 * t}, ${232 - 98 * t}, ${0.09 + 0.85 * t})`;
+        ctx.fillStyle = `rgba(${243 - 164 * t}, ${238 - 95 * t}, ${232 - 179 * t}, ${0.05 + 0.6 * t})`;
         const r = 1 + t * 2.4;
         ctx.fillRect(x + ox - r / 2, y + oy - r / 2, r, r);
       }
@@ -1018,8 +1092,8 @@ function startMotion() {
   };
   addEventListener("scroll", onScroll, { passive: true }); onScroll();
 
-  const targets = document.querySelectorAll(".card, .tile, .hero .label, h2");
-  document.querySelectorAll(".card, .tile").forEach((el) => el.classList.add("reveal"));
+  const targets = document.querySelectorAll(".card, .tile, .hero .label, .intro > *, h1, h2");
+  document.querySelectorAll(".card, .tile, .intro > *").forEach((el) => el.classList.add("reveal"));
   if (!("IntersectionObserver" in window)) { targets.forEach((el) => el.classList.add("in-view")); return; }
   const io = new IntersectionObserver((entries) => {
     entries.forEach((en) => { if (en.isIntersecting) { en.target.classList.add("in-view"); io.unobserve(en.target); } });
