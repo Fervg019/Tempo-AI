@@ -83,7 +83,7 @@ Standard library only, so nothing extra to install. The first start trains the f
 
 ## Public demo
 
-Live demo: https://tempo-ai-669c3.containers.snapdeploy.app (all AI text on it comes from AMD Token Factory, DeepSeek-V4-Flash on AMD GPUs; the three preset situations have saved AI text so they open instantly).
+Live demo: https://tempo-ai-demo-669c3.containers.snapdeploy.app (all AI text on it comes from AMD Token Factory, DeepSeek-V4-Flash on AMD GPUs; the three preset situations have saved AI text so they open instantly).
 
 `Dockerfile` builds the app (the forecaster is trained while the image is built, so it starts in seconds). It runs on any host that builds from a Dockerfile; the demo runs on SnapDeploy's free tier:
 
